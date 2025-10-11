@@ -7,13 +7,14 @@ import pydantic as pydt
 from personax.types import BaseModel
 from personax.types import BaseSchema
 
+
 class Message(BaseSchema):
     __slots__ = ("role", "content", "image")
 
     def __init__(
         self,
         *,
-        role: t.Literal["user", "assistant"],
+        role: t.Literal['system', 'user', 'assistant'],
         content: str | None,
         image: bytes | None = None,
     ) -> None:
@@ -26,32 +27,43 @@ class Message(BaseSchema):
 class Messages(BaseModel):
     messages: t.Iterable[Message]
 
-    @pydt.model_validator(mode="after")
-    def val_messages(self) -> t.Self:
+    def _validate(
+        self,
+        *,
+        allow_system: bool = False,
+        first_role: t.Literal['system', 'user', 'assistant'] = "user",
+        last_role: t.Literal['system', 'user', 'assistant'] = "user",
+    ) -> None:
         iterator = iter(self.messages)
-
         try:
             first = next(iterator)
-        except StopIteration:
-            raise ValueError("Messages cannot be empty")
+        except StopIteration as exc:
+            raise ValueError("Messages cannot be empty") from exc
 
-        if first.role not in ("user", "assistant"):
-            raise ValueError(f"Role must be 'user' or 'assistant', got {first.role!r}")
-
-        if first.role != "user":
-            raise ValueError("First message must be from 'user'")
+        if allow_system:
+            if first.role not in ("user", "assistant", "system"):
+                raise ValueError(f"Invalid role for first message: {first.role!r}")
+        else:
+            if first.role not in ("user", "assistant"):
+                raise ValueError(f"Role must be 'user' or 'assistant', got {first.role!r}")
+            if first.role != first_role:
+                raise ValueError(f"First message must be {first_role}")
 
         prev = first
         last = first
-        for i, curr in enumerate(iterator, start=1):
-            if curr.role not in ("user", "assistant"):
-                raise ValueError(f"Role must be 'user' or 'assistant', got {curr.role!r}")
+        for curr in iterator:
+            if (curr.role not in ("user", "assistant")
+                    and not (allow_system and curr.role == "system")):
+                raise ValueError(f"Invalid role: {curr.role!r}")
             if prev.role == curr.role:
                 raise ValueError("Messages must alternate between 'user' and 'assistant'")
             prev = curr
             last = curr
 
-        if last.role != "user":
-            raise ValueError("Last message must be from 'user'")
+        if last.role != last_role:
+            raise ValueError(f"Last message must be {last_role}")
 
+    @pydt.model_validator(mode="after")
+    def val_messages(self) -> t.Self:
+        self._validate(allow_system=False, first_role="user", last_role="user")
         return self

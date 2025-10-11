@@ -3,26 +3,10 @@ from __future__ import annotations
 import typing as t
 
 from personax.types import BaseSchema
+from personax.types.completion import CompletionMessage
 from personax.types.usage import Usage
 
-
-class CompletionChunkDelta(BaseSchema):
-    reason: str | None
-    content: str | None
-    refusal: str | None
-
-    __slots__ = ("reason", "content", "refusal")
-
-    def __init__(
-        self,
-        *,
-        reason: str | None = None,
-        content: str | None = None,
-        refusal: str | None = None,
-    ) -> None:
-        self.reason = reason
-        self.content = content
-        self.refusal = refusal
+CompletionChunkDelta = CompletionMessage
 
 
 class CompletionChunk(BaseSchema):
@@ -38,7 +22,7 @@ class CompletionChunk(BaseSchema):
     def __init__(
         self,
         *,
-        id: str,
+        id: str,  # pylint: disable=redefined-builtin
         delta: CompletionChunkDelta,
         finish_reason: t.Literal["stop", "length", "content_filter"] | None = None,
         created: int,

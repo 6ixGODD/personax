@@ -4,10 +4,10 @@ import abc
 import typing as t
 
 from personax.helpers.mixin import AsyncContextMixin
-from personax.tools import BaseTool
+from personax.tools import BaseToolType
 from personax.types.completion import Completion
 from personax.types.completion_chunk import CompletionChunk
-from personax.types.message import Messages
+from personax.types.compat.message import Messages
 from personax.types.stream import AsyncStream
 from personax.utils import UNSET
 from personax.utils import Unset
@@ -19,7 +19,7 @@ class CompletionSystem(AsyncContextMixin, abc.ABC):
     async def complete(self,
                        messages: Messages,
                        *,
-                       tools: t.Sequence[BaseTool] = (),
+                       tools: t.Sequence[BaseToolType] = (),
                        chatcmpl_id: str | Unset = UNSET,
                        stream: bool = False,
                        max_completion_tokens: int | Unset = UNSET,

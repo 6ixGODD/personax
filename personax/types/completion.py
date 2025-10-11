@@ -38,7 +38,7 @@ class Completion(BaseSchema):
     def __init__(
         self,
         *,
-        id: str,
+        id: str,  # pylint: disable=redefined-builtin
         message: CompletionMessage,
         finish_reason: t.Literal["stop", "length", "content_filter"],
         created: int,

@@ -7,6 +7,7 @@ import jinja2 as j2
 from personax.resources import WatchedResource
 
 
+# pylint: disable=too-few-public-methods
 @t.runtime_checkable
 class Template(t.Protocol):
 

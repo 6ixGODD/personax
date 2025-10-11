@@ -4,14 +4,14 @@ import abc
 import types
 import typing as t
 
-from persomna.resources.template import Template
-from persomna.types.compat.message import Messages as CompatMessages
-from persomna.types.context import Context
-from persomna.types.message import Messages
+from personax.resources.template import Template
+from personax.types.compat.message import Messages as CompatMessages
+from personax.types.context import Context
+from personax.types.message import Messages
 
 _Primitive: t.TypeAlias = str | int | float | bool | None
-_RecursiveMapping: t.TypeAlias = t.Mapping[str, t.Union[_Primitive, "_RecursiveMapping"]]
-BuiltT = t.TypeVar("BuiltT", bound=_RecursiveMapping)
+_Mapping: t.TypeAlias = t.Mapping[str, t.Union[_Primitive, t.Any]]
+BuiltT = t.TypeVar("BuiltT", bound=_Mapping)
 
 
 class ContextSystem(abc.ABC, t.Generic[BuiltT]):
@@ -46,7 +46,7 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         """
         return context  # override if needed
 
-    async def postprocess(self, context: Context, built: BuiltT) -> Context:
+    async def postprocess(self, context: Context, _built: BuiltT) -> Context:
         """
         Postprocess the context after this system has built its content.
 
@@ -57,7 +57,7 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
 
         Args:
             context: The current context
-            built: The content this system just built
+            _built: The content this system just built
 
         Returns:
             Modified context (default implementation returns unchanged)
@@ -77,7 +77,6 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         Returns:
             String representation for the LLM, or None to omit from final prompt
         """
-        pass  # override if needed
 
     @abc.abstractmethod
     async def init(self) -> None:
@@ -87,7 +86,6 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         This method should set up any required resources, connections, or state.
         Called when entering the async context manager.
         """
-        pass
 
     @abc.abstractmethod
     async def close(self) -> None:
@@ -97,7 +95,6 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         This method should release resources and perform cleanup.
         Called when exiting the async context manager.
         """
-        pass
 
     async def __aenter__(self) -> t.Self:
         await self.init()
@@ -119,13 +116,11 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
     @t.overload
     async def build(self, context: Context) -> BuiltT:
         """Build from a full Context object (for preparing messages for LLM calls)."""
-        ...
 
     # For tool calls with string input/output.
     @t.overload
     async def build(self, context: str) -> BuiltT:
         """Build from a string input (for tool calls with string input/output)."""
-        ...
 
     @abc.abstractmethod
     async def build(self, context: Context | str) -> BuiltT:
@@ -141,7 +136,6 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         Returns:
             Structured data (BuiltT) containing this system's contextual information
         """
-        ...
 
 
 class ContextCompose(t.Sequence[ContextSystem[t.Any]]):

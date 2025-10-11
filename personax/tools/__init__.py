@@ -11,9 +11,9 @@ import pydantic as pydt
 
 # JSON serializable types
 JsonPrimitive = t.Union[str, int, float, bool, None]
-JsonValue = t.Union[JsonPrimitive, t.Dict[str, t.Any], t.List[t.Any]]
-JsonObject = t.Dict[str, JsonValue]
-JsonArray = t.List[JsonValue]
+JsonValue = t.Union[JsonPrimitive, t.Mapping[str, t.Any], t.Sequence[t.Any]]
+JsonObject = t.Union[JsonValue, t.Mapping[str, JsonValue]]
+JsonArray = t.Sequence[JsonValue]
 
 # JSON Schema types
 JsonSchemaType = t.Literal["string", "integer", "number", "boolean", "array", "object"]
@@ -85,11 +85,13 @@ class ToolSchema(pydt.BaseModel):
     that can be executed by the tool."""
 
 
+# pylint: disable=too-few-public-methods
 class Property:
     __slots__ = ("description", "enums", "minimum", "maximum", "min_length", "max_length",
                  "pattern", "format", "default", "examples", "min_items", "max_items",
                  "unique_items", "extra")
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         *,
@@ -100,7 +102,7 @@ class Property:
         min_length: int | None = None,
         max_length: int | None = None,
         pattern: str | None = None,
-        format: str | None = None,
+        format: str | None = None,  # pylint: disable=redefined-builtin
         default: JsonValue | None = None,
         examples: t.List[JsonValue] | None = None,
         min_items: int | None = None,
@@ -129,47 +131,45 @@ def _get_json_schema_type(python_type: type) -> JsonSchemaType:
     origin = t.get_origin(python_type)
     args = t.get_args(python_type)
 
+    result: JsonSchemaType
+
     if origin is t.Union:
         # Handle Optional[T] which is Union[T, None]
         non_none_types = [arg for arg in args if arg is not type(None)]
-        if len(non_none_types) == 1:
-            return _get_json_schema_type(non_none_types[0])
-        # Handle other Union types - for now just take the first type
-        return _get_json_schema_type(non_none_types[0])
+        target = non_none_types[0] if non_none_types else str  # fallback
+        result = _get_json_schema_type(target)
 
-    # Handle List types
-    if origin is list or python_type is list:
-        return "array"
+    elif origin is list or python_type is list:
+        result = "array"
 
-    # Handle Dict types
-    if origin is dict or python_type is dict:
-        return "object"
+    elif origin is dict or python_type is dict:
+        result = "object"
 
-    # Handle Literal types
-    if origin is t.Literal:
+    elif origin is t.Literal:
         first_arg = args[0]
         if isinstance(first_arg, str):
-            return "string"
+            result = "string"
         elif isinstance(first_arg, int):
-            return "integer"
+            result = "integer"
         elif isinstance(first_arg, float):
-            return "number"
+            result = "number"
         elif isinstance(first_arg, bool):
-            return "boolean"
+            result = "boolean"
         else:
-            return "string"
+            result = "string"
 
-    # Basic types
-    type_mapping: t.Dict[type, JsonSchemaType] = {
-        str: "string",
-        int: "integer",
-        float: "number",
-        bool: "boolean",
-        dict: "object",
-        list: "array",
-    }
+    else:
+        type_mapping: t.Dict[type, JsonSchemaType] = {
+            str: "string",
+            int: "integer",
+            float: "number",
+            bool: "boolean",
+            dict: "object",
+            list: "array",
+        }
+        result = type_mapping.get(python_type, "string")
 
-    return type_mapping.get(python_type, "string")
+    return result
 
 
 def _get_array_items_schema(python_type: type) -> t.Dict[str, JsonValue] | None:
@@ -212,13 +212,16 @@ def _extract_property_from_annotation(annotation: t.Any,) -> t.Tuple[type, Prope
     return annotation, None
 
 
-class BaseTool(abc.ABC):
+P = t.ParamSpec('P')
+R = t.TypeVar('R', bound=t.Union[str, JsonObject, t.Sequence[JsonObject], None])
+
+
+class BaseTool(t.Generic[P, R], abc.ABC):
     __function_description__: t.ClassVar[str]
 
     @abc.abstractmethod
-    def __call__(self, **kwargs: Property) -> str | JsonObject | t.List[str | JsonObject]:
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
         """The actual implementation of the tool."""
-        pass
 
     @staticmethod
     def _parse_arguments(args: str) -> t.Dict[str, JsonValue]:
@@ -226,7 +229,7 @@ class BaseTool(abc.ABC):
         if not args:
             return {}
         try:
-            return json.loads(args)
+            return t.cast(t.Dict[str, JsonValue], json.loads(args))
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON string: {args}") from e
 
@@ -234,8 +237,8 @@ class BaseTool(abc.ABC):
     def __function_name__(self) -> str:
         """Generate function name from class name in snake_case."""
         cls_name = self.__class__.__name__
-        s1 = re.sub("([A-Z]+)([A-Z][a-z])", r"\1_\2", cls_name)
-        s2 = re.sub("([a-z\d])([A-Z])", r"\1_\2", s1)
+        s1 = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", cls_name)
+        s2 = re.sub(r"([a-z\d])([A-Z])", r"\1_\2", s1)
         return s2.lower().replace(" ", "_").replace("-", "_")
 
     @ft.cached_property
@@ -307,3 +310,6 @@ class BaseTool(abc.ABC):
 
     def __hash__(self) -> int:
         return hash(self.__function_name__)
+
+
+BaseToolType: t.TypeAlias = BaseTool[t.Any, t.Union[str, JsonObject, t.Sequence[JsonObject], None]]

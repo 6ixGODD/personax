@@ -59,6 +59,7 @@ def utc_now() -> dt.datetime:
     return dt.datetime.now(dt.UTC)
 
 
+# pylint: disable=invalid-name
 class classproperty(property):
 
     def __get__(self, __instance: t.Any, __owner: type | None = None) -> t.Any:
@@ -100,13 +101,12 @@ def filter_kwargs(fn: t.Callable[..., t.Any],
                 if param_name in valid_params and param_name not in {"self", "cls"}:
                     filtered[param_name] = value
         return filtered
-    else:
-        # Direct filtering without prefix removal
-        return {
-            key: value
-            for key, value in kwargs.items()
-            if key in valid_params and key not in {"self", "cls"}
-        }
+    # Direct filtering without prefix removal
+    return {
+        key: value
+        for key, value in kwargs.items()
+        if key in valid_params and key not in {"self", "cls"}
+    }
 
 
 class Unset:

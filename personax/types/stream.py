@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from personax.types import BaseSchema
-
-_T = t.TypeVar("_T", bound=BaseSchema)
+_T = t.TypeVar("_T")
 _U = t.TypeVar("_U")
 _V = t.TypeVar("_V")
 
@@ -15,11 +13,12 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
         self._source = source
         self._mapper = mapper
         self._is_consumed = False
-        self._items: t.List[_T] = []
-        self._error: Exception | None = None
+        self._items = []  # type: t.List[_T]
+        self._error = None  # type: t.Optional[Exception]
         self._completed = False
+        self._iterator = None  # type: t.Optional[t.AsyncIterator[_T]]
 
-    async def __aiter__(self) -> t.AsyncIterator[_T]:
+    async def __aiter__(self) -> t.AsyncIterator[_T]:  # pylint: disable=invalid-overridden-method
         if self._is_consumed:
             # If the stream has already been consumed, return the cached items
             for item in self._items:
@@ -32,7 +31,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
                 if self._mapper:
                     item = self._mapper(raw_item)
                 else:
-                    item = raw_item
+                    item = t.cast(_T, raw_item)
 
                 self._items.append(item)
                 yield item
@@ -44,13 +43,13 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
             self._completed = True
 
     async def __anext__(self) -> _T:
-        if not hasattr(self, "_iterator"):
+        if not hasattr(self, "_iterator") or self._iterator is None:
             self._iterator = self.__aiter__()
         return await self._iterator.__anext__()
 
     def filter(self, predicate: t.Callable[[_T], bool]) -> AsyncStream[_T]:
 
-        async def filtered_source():
+        async def filtered_source() -> t.AsyncIterator[_T]:
             async for item in self:
                 if predicate(item):
                     yield item
@@ -59,7 +58,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
 
     def tap(self, action: t.Callable[[_T], None]) -> AsyncStream[_T]:
 
-        async def tap_source():
+        async def tap_source() -> t.AsyncIterator[_T]:
             async for item in self:
                 action(item)
                 yield item
@@ -68,7 +67,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
 
     def map(self, mapper: t.Callable[[_T], _U]) -> AsyncStream[_U]:
 
-        async def mapped_source():
+        async def mapped_source() -> t.AsyncIterator[_U]:
             async for item in self:
                 yield mapper(item)
 
@@ -76,7 +75,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
 
     def take(self, n: int, /) -> AsyncStream[_T]:
 
-        async def take_source():
+        async def take_source() -> t.AsyncIterator[_T]:
             count = 0
             async for item in self:
                 if count >= n:
@@ -88,7 +87,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
 
     def skip(self, n: int, /) -> AsyncStream[_T]:
 
-        async def skip_source():
+        async def skip_source() -> t.AsyncIterator[_T]:
             count = 0
             async for item in self:
                 if count < n:
@@ -100,7 +99,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
 
     def chunk(self, size: int) -> AsyncStream[t.List[_T]]:
 
-        async def chunk_source():
+        async def chunk_source() -> t.AsyncIterator[t.List[_T]]:
             batch = []
             async for item in self:
                 batch.append(item)
@@ -114,7 +113,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
 
     def take_while(self, predicate: t.Callable[[_T], bool]) -> AsyncStream[_T]:
 
-        async def take_while_source():
+        async def take_while_source() -> t.AsyncIterator[_T]:
             async for item in self:
                 if not predicate(item):
                     break
@@ -124,7 +123,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
 
     def enumerate(self, start: int = 0) -> AsyncStream[t.Tuple[int, _T]]:
 
-        async def enumerate_source():
+        async def enumerate_source() -> t.AsyncIterator[t.Tuple[int, _T]]:
             index = start
             async for item in self:
                 yield index, item

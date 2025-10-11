@@ -27,7 +27,7 @@ class Weather(te.TypedDict, total=False):
     """Wind power description, e.g., "5 km/h NW"."""
 
 
-class GetWeather(BaseTool):
+class GetWeather(BaseTool[[str], Weather]):
     __function_description__ = ("Get the current weather information for a "
                                 "given location by its administrative code.")
 

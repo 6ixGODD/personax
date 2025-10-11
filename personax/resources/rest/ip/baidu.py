@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools as ft
+import typing as t
 
 import httpx
 import pydantic as pydt
@@ -52,7 +53,7 @@ class BaiduLocationContent(te.TypedDict):
     address_detail: BaiduLocationAddressDetail
     """Detailed address components"""
 
-    point: dict
+    point: dict[str, t.Any]
     """Geographical coordinates (latitude and longitude)"""
 
 
@@ -98,6 +99,6 @@ class BaiduIpLocationService(IpLocationService):
                                       cast_to=BaiduLocation,
                                       retry_wait=self.retry_wait)
         if response.status != 0:
-            raise ValueError(f"Baidu Location IP Service error: {response.get('message')}")
+            raise ValueError(f"Baidu Location IP Service error: {response.message}")
         return Location(address=response.address,
                         adcode=response.content["address_detail"]["adcode"])

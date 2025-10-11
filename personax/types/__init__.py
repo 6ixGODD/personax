@@ -15,10 +15,17 @@ class BaseSchema:
     def _dumps(self, v: object, /) -> object:
         if isinstance(v, BaseSchema):
             return v.dumps()
-        elif isinstance(v, (list, tuple)):
+        if isinstance(v, (list, tuple)):
             return [self._dumps(item) for item in v]
-        else:
-            return v
+        return v
+
+    @classmethod
+    def from_dict(cls, data: dict[str, object]) -> t.Self:
+        obj = cls.__new__(cls)  # 不调用 __init__
+        for slot in cls.__slots__:
+            value = data.get(slot, None)
+            setattr(obj, slot, value)
+        return obj
 
     def __eq__(self, other: object, /) -> bool:
         if not isinstance(other, self.__class__):
@@ -35,7 +42,7 @@ class BaseSchema:
     def __getstate__(self) -> tuple[object, ...]:  # for pickle optimization
         return tuple(getattr(self, slot, None) for slot in self.__slots__)
 
-    def __setstate__(self, state: tuple[object, ...]):
+    def __setstate__(self, state: tuple[object, ...]) -> None:  # for pickle optimization
         for slot, value in zip(self.__slots__, state):
             setattr(self, slot, value)
 

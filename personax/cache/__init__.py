@@ -5,6 +5,7 @@ import typing as t
 from personax import __title__
 
 
+# pylint: disable=too-few-public-methods
 class KeyBuilder:
     """Utility class for building cache keys with a consistent format.
 
@@ -47,11 +48,9 @@ class KVCache(t.Protocol):
         Raises:
             KeyError: If the key does not exist or has expired
         """
-        ...
 
     def __setitem__(self, key: str, value: t.Any) -> None:
         """Set an item in the cache with the specified key and value."""
-        ...
 
     def __delitem__(self, key: str) -> None:
         """Delete an item from the cache by key.
@@ -59,27 +58,21 @@ class KVCache(t.Protocol):
         Raises:
             KeyError: If the key does not exist
         """
-        ...
 
     def __iter__(self) -> t.Iterator[str]:
         """Return an iterator over the keys in the cache."""
-        ...
 
     def __len__(self) -> int:
         """Return the number of items in the cache."""
-        ...
 
     def __contains__(self, key: object, /) -> bool:
         """Check if the cache contains a specific key."""
-        ...
 
     def get(self, key: str, /) -> t.Any:
         """Get an item from the cache, returning None if the key does not exist."""
-        ...
 
     def clear(self) -> None:
         """Clear all items from the cache."""
-        ...
 
     def pop(self, key: str, /) -> t.Any:
         """Remove and return an item from the cache by key.
@@ -87,7 +80,6 @@ class KVCache(t.Protocol):
         Raises:
             KeyError: If the key does not exist
         """
-        ...
 
     def popitem(self) -> t.Tuple[str, t.Any]:
         """Remove and return an arbitrary (key, value) pair from the cache.
@@ -95,16 +87,13 @@ class KVCache(t.Protocol):
         Raises:
             KeyError: If the cache is empty
         """
-        ...
 
     def set(self, key: str, value: t.Any, /) -> None:
         """Set an item in the cache with the specified key and value."""
-        ...
 
     def setx(self, key: str, value: t.Any, /, ttl: int | None = None) -> None:
         """Set an item in the cache with the specified key, value, and
         optional time-to-live (TTL)."""
-        ...
 
     def ttl(self, key: str, /) -> int | None:
         """Get the time-to-live (TTL) for a specific key in the cache.
@@ -115,7 +104,6 @@ class KVCache(t.Protocol):
         Raises:
             KeyError: If the key does not exist
         """
-        ...
 
     def expire(self, key: str, /, ttl: int | None = None) -> None:
         """Set the time-to-live (TTL) for a specific key in the cache.
@@ -123,7 +111,6 @@ class KVCache(t.Protocol):
         Raises:
             KeyError: If the key does not exist
         """
-        ...
 
     def incr(self, key: str, /, amount: int = 1) -> int:
         """Increment the integer value of a key by the given amount. If the key
@@ -132,7 +119,6 @@ class KVCache(t.Protocol):
         Raises:
             TypeError: If the value is not an integer
         """
-        ...
 
     def decr(self, key: str, /, amount: int = 1) -> int:
         """Decrement the integer value of a key by the given amount. If the key
@@ -141,4 +127,3 @@ class KVCache(t.Protocol):
         Raises:
             TypeError: If the value is not an integer
         """
-        ...

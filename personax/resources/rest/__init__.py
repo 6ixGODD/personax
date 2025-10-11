@@ -7,6 +7,8 @@ import httpx
 import pydantic as pydt
 import tenacity
 
+from personax.helpers.mixin import AsyncContextMixin
+
 RespT = t.TypeVar("RespT", bound=pydt.BaseModel)
 
 
@@ -20,7 +22,7 @@ class BearerAuth(httpx.Auth):
         yield request
 
 
-class RESTResource(abc.ABC):
+class RESTResource(abc.ABC, AsyncContextMixin):
 
     def __init__(self,
                  base_url: str,
@@ -53,9 +55,9 @@ class RESTResource(abc.ABC):
         @tenacity.retry(stop=tenacity.stop_after_attempt(max_retries),
                         wait=tenacity.wait_fixed(retry_wait),
                         reraise=True)
-        async def _make_request(method: str, endpoint: str, headers: dict[str, str] | None,
-                                params: dict[str, t.Any] | None,
-                                json: dict[str, t.Any] | None) -> httpx.Response:
+        async def _make_request(method: str, endpoint: str, headers: t.Mapping[str, str] | None,
+                                params: t.Mapping[str, t.Any] | None,
+                                json: t.Mapping[str, t.Any] | None) -> httpx.Response:
             response = await self.http_client.request(method,
                                                       endpoint,
                                                       headers=headers,
@@ -66,3 +68,6 @@ class RESTResource(abc.ABC):
 
         response = await _make_request(method, endpoint, headers, params, json)
         return cast_to.model_validate(response.json())
+
+    async def close(self) -> None:
+        await self.http_client.aclose()

@@ -7,6 +7,7 @@ import typing as t
 
 import watchdog.events as evt
 import watchdog.observers as obsrv
+import watchdog.observers.api as obsrv_api
 
 
 class FileHandler(evt.FileSystemEventHandler):
@@ -16,7 +17,9 @@ class FileHandler(evt.FileSystemEventHandler):
         self.fpath = fpath
 
     def on_modified(self, event: evt.FileModifiedEvent | evt.DirModifiedEvent) -> None:
-        if not event.is_directory and p.Path(event.src_path) == self.fpath:
+        if (not event.is_directory
+                and (p.Path(event.src_path if isinstance(event.src_path, str) else event.src_path.
+                            decode('utf-8')) == self.fpath)):
             self.callback()
 
 
@@ -30,7 +33,7 @@ class WatchedResource(abc.ABC, t.Generic[T]):
         self.data: T | None = None
         self.backup: T | None = None
         self.lock = threading.RLock()
-        self.observer: t.Optional[obsrv.Observer] = None
+        self.observer: t.Optional[obsrv_api.BaseObserver] = None
 
         self.load()
         self.watch()
@@ -45,6 +48,7 @@ class WatchedResource(abc.ABC, t.Generic[T]):
                 data = self._parse()
                 self.backup = self.data  # Backup current data
                 self.data = data
+        # pylint: disable=broad-except
         except Exception:
             if self.backup is not None:
                 self.data = self.backup
@@ -63,5 +67,5 @@ class WatchedResource(abc.ABC, t.Generic[T]):
             self.observer.stop()
             self.observer.join()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.stop()

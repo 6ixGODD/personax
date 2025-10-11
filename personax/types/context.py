@@ -8,10 +8,10 @@ from personax.types.message import Message
 
 class Context(BaseSchema):
     messages: t.List[Message]
-    context: t.Dict[str, t.Any] | None
+    context: t.Dict[str, t.Any]
 
     __slots__ = ("messages", "context")
 
     def __init__(self, *, messages: t.List[Message], context: t.Dict[str, t.Any] | None = None):
         self.messages = messages
-        self.context = context
+        self.context = context or {}

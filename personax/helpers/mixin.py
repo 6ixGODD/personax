@@ -26,7 +26,7 @@ class AsyncContextMixin(t.Protocol):
     ) -> t.Literal[False]:
         await self.close()
         if exc_type is not None:
-            raise exc_val.with_traceback(traceback) from exc_val
+            raise (exc_val or exc_type()).with_traceback(traceback) from exc_val
         return False
 
 
@@ -52,5 +52,5 @@ class ContextMixin(t.Protocol):
     ) -> t.Literal[False]:
         self.close()
         if exc_type is not None:
-            raise exc_val.with_traceback(traceback) from exc_val
+            raise (exc_val or exc_type()).with_traceback(traceback) from exc_val
         return False

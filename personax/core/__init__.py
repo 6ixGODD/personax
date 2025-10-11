@@ -6,7 +6,7 @@ import typing as t
 from personax.completion import CompletionSystem
 from personax.context import ContextCompose
 from personax.helpers.mixin import AsyncContextMixin
-from personax.tools import BaseTool
+from personax.tools import BaseToolType
 from personax.types import BaseModel
 from personax.types.completion import Completion
 from personax.types.completion_chunk import CompletionChunk
@@ -43,7 +43,7 @@ class Core(AsyncContextMixin):
         self,
         *,
         context: ContextCompose,
-        toolset: t.Iterable[BaseTool] = (),
+        toolset: t.Iterable[BaseToolType] = (),
         completion: CompletionSystem,
         model_id: str,
     ) -> None:
@@ -92,8 +92,8 @@ class PersonaX(AsyncContextMixin, abc.ABC):
         raise NotImplementedError("Subclasses must implement the 'from_config' method.")
 
     @classproperty
-    def id(cls) -> str:
-        return build_id(cls.name, cls.version, cls.scenario)
+    def id(self) -> str:
+        return build_id(self.name, self.version, self.scenario)
 
     def __init_subclass__(cls, **kwargs: t.Any) -> None:
         super().__init_subclass__(**kwargs)

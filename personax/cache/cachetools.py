@@ -21,7 +21,7 @@ class CachetoolsKVCache:
     def __init__(self, maxsize: int = 1024, default_ttl: int | None = None):
         self._maxsize = maxsize
         self._default_ttl = default_ttl
-        self._cache = LRUCache(maxsize=maxsize)  # type: LRUCache
+        self._cache = LRUCache(maxsize=maxsize)  # type: LRUCache[str, t.Any]
         self._expiry = {}  # type: t.Dict[str, float | None]
 
     def _is_expired(self, key: str) -> bool:

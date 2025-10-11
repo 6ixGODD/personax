@@ -38,6 +38,7 @@ class ProfileContext(te.TypedDict):
     """Extra information."""
 
 
+# pylint: disable=too-few-public-methods
 @dc.dataclass
 class Info:
     prefname: str | None = dc.field(default=None)
@@ -70,6 +71,7 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
         if info.ip and self.ip_service:
             try:
                 location = await self.ip_service.locate(info.ip)
+            # pylint: disable=broad-except
             except Exception:
                 # If IP location service fails, continue without location
                 location = None
