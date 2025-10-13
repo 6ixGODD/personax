@@ -5,6 +5,7 @@ import typing as t
 import pydantic as pydt
 import typing_extensions as te
 
+from personax.exceptions import RESTResourceException
 from personax.resources.rest.weather import WeatherInfo
 from personax.resources.rest.weather import WeatherInfoService
 
@@ -55,14 +56,16 @@ class AmapWeatherInfoLives(te.TypedDict):
 class AmapWeatherInfo(pydt.BaseModel):
     status: str = pydt.Field(..., description='Response status, "1" indicates success')
 
-    count: str = pydt.Field(..., description="Number of results returned")
+    count: str | None = pydt.Field(None, description="Number of results returned")
 
-    info: str = pydt.Field(..., description='Response information, "OK" indicates success')
+    info: str | None = pydt.Field(None, description='Response information, "OK" indicates success')
 
-    infocode: str = pydt.Field(..., description='Response code, "10000" indicates success')
+    infocode: str | None = pydt.Field(None, description='Response code, "10000" indicates success')
 
-    lives: t.List[AmapWeatherInfoLives] = pydt.Field(...,
-                                                     description="List of live weather information")
+    lives: t.List[AmapWeatherInfoLives] = pydt.Field(
+        default_factory=list,
+        description="List of live weather information",
+    )
 
 
 class AmapWeatherInfoService(WeatherInfoService):
@@ -74,23 +77,22 @@ class AmapWeatherInfoService(WeatherInfoService):
                  max_retries: int = 3,
                  retry_wait: float = 2.0):
         self.key = key
-        super().__init__(base_url="https://restapi.amap.com/v3/weather/weatherInfo",
-                         timeout=timeout)
+        super().__init__(base_url="https://restapi.amap.com/v3/weather/", timeout=timeout)
         self.max_retries = max_retries
         self.retry_wait = retry_wait
 
     async def fetch(self, adcode: str, /) -> WeatherInfo:
         params = AmapWeatherInfoParams(key=self.key, city=adcode, extensions="base", output="JSON")
-        response = await self.request(endpoint="",
+        response = await self.request(endpoint="weatherInfo",
                                       method="GET",
                                       params=params,
                                       cast_to=AmapWeatherInfo,
                                       max_retries=self.max_retries,
                                       retry_wait=self.retry_wait)
         if response.status != "1" or response.infocode != "10000":
-            raise ValueError(f"Failed to fetch weather data: {response.info}")
-        if not response.lives:
-            raise ValueError("No live weather data available")
+            raise RESTResourceException(f"Failed to fetch weather data: {response.info}")
+        if not response.lives or len(response.lives) == 0:
+            raise RESTResourceException("No live weather data available")
         live = response.lives[0]
 
         return WeatherInfo(address=f'{live["province"]} {live["city"]}',
