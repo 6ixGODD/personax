@@ -26,7 +26,7 @@ services:
 
 # Template Paths
 templates:
-  main: "../../prompts/prompt.j2"
+  main: "../../prompts/main.j2"
   profile: "../../prompts/context/profile.j2"
 
 # Persona Settings
