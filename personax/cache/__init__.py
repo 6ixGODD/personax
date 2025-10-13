@@ -19,7 +19,8 @@ class KeyBuilder:
         self.prefix = prefix
 
     def build(self, *parts: str) -> str:
-        """Build a cache key by joining the prefix and parts with the split character.
+        """Build a cache key by joining the prefix and parts with the split
+        character.
 
         Args:
             *parts (str): Parts to include in the key.
@@ -69,7 +70,8 @@ class KVCache(t.Protocol):
         """Check if the cache contains a specific key."""
 
     def get(self, key: str, /) -> t.Any:
-        """Get an item from the cache, returning None if the key does not exist."""
+        """Get an item from the cache, returning None if the key does not
+        exist."""
 
     def clear(self) -> None:
         """Clear all items from the cache."""
