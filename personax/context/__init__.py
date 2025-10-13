@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import abc
-import types
 import typing as t
 
 from personax.resources.template import Template
 from personax.types.compat.message import Messages as CompatMessages
 from personax.types.context import Context
 from personax.types.message import Messages
+from personax.utils import AsyncContextMixin
 
 _Primitive: t.TypeAlias = t.Union[str, int, float, bool, None]
 _Mapping: t.TypeAlias = t.Mapping[str, t.Union[_Primitive, t.Any]]
 BuiltT = t.TypeVar("BuiltT", bound=_Mapping)
 
 
-class ContextSystem(abc.ABC, t.Generic[BuiltT]):
+class ContextSystem(abc.ABC, t.Generic[BuiltT], AsyncContextMixin):
     """Abstract base class for context systems that process and enrich
     conversational context.
 
@@ -102,19 +102,6 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         if not isinstance(cls.__key__, str) or not cls.__key__:
             raise ValueError(f"{cls.__name__}.__key__ must be a non-empty string.")
 
-    async def __aenter__(self) -> t.Self:
-        await self.init()
-        return self
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: types.TracebackType | None,
-        /,
-    ) -> None:
-        await self.close()
-
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({self.__key__})"
 
@@ -148,7 +135,7 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         """
 
 
-class ContextCompose(t.Sequence[ContextSystem[t.Any]]):
+class ContextCompose(t.Sequence[ContextSystem[t.Any]], AsyncContextMixin):
     """Composition of multiple ContextSystems into a unified context pipeline.
 
     ContextCompose orchestrates multiple context systems, running them in
@@ -198,8 +185,8 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]]):
             await system.close()
 
     async def build(self, messages: Messages) -> CompatMessages:
-        """
-        Build the complete contextual message structure by running all systems.
+        """Build the complete contextual message structure by running all
+        systems.
 
         This method orchestrates the three-phase process:
         1. For each system, run preprocess → build → postprocess
