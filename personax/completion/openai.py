@@ -9,7 +9,6 @@ import openai
 import openai.resources.chat as chat_rc
 import openai.types.chat as chat_t
 import openai.types.chat.chat_completion_message_function_tool_call_param as fn_param
-from openai.types.chat import ChatCompletion
 
 from personax.completion import CompletionSystem
 from personax.exceptions import ToolCallException
@@ -173,7 +172,8 @@ class OpenAICompletion(CompletionSystem):
                 if isinstance(prompt_cache_key, Unset) else prompt_cache_key,
                 parallel_tool_calls=True if tools else openai.omit,
                 top_p=self.top_p,
-                **filter_kwargs(chat_rc.AsyncCompletions.create, kwargs))  # type: ChatCompletion
+                **filter_kwargs(chat_rc.AsyncCompletions.create,
+                                kwargs))  # type: chat_t.ChatCompletion
 
             choice = completion.choices[0]
 
@@ -216,6 +216,8 @@ class OpenAICompletion(CompletionSystem):
                         start_time = time.time()
                         try:
                             result = tools_map[func_name](**args)
+                            if isinstance(result, t.Awaitable):
+                                result = await result
                         except ToolCallException as e:
                             logger.error("Error executing tool %s: %s", func_name, str(e))
                             result = f"Error executing tool {func_name}"
@@ -444,6 +446,8 @@ class OpenAICompletion(CompletionSystem):
                             start_time = time.time()
                             try:
                                 result = tools_map[func_name](**args)
+                                if isinstance(result, t.Awaitable):
+                                    result = await result
                             except ToolCallException as e:
                                 logger.error("Error executing tool %s: %s", func_name, str(e))
                                 result = f"Error executing tool {func_name}"
