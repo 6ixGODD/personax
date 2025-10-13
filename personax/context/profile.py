@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-import dataclasses as dc
 import datetime
 import typing as t
+import zoneinfo
 
 import typing_extensions as te
 
 from personax.context import ContextSystem
+from personax.exceptions import RESTResourceException
 from personax.resources.rest.ip import IpLocationService, Location
 from personax.resources.template import Template
 from personax.types.context import Context
@@ -26,7 +27,7 @@ class ProfileContext(te.TypedDict):
     """Current timestamp in ISO format."""
 
     timezone: str
-    """Current timezone."""
+    """Current timezone. Should be a valid IANA timezone string."""
 
     user_agent: str | None
     """User agent string."""
@@ -38,14 +39,21 @@ class ProfileContext(te.TypedDict):
     """Extra information."""
 
 
-# pylint: disable=too-few-public-methods
-@dc.dataclass
-class Info:
-    prefname: str | None = dc.field(default=None)
-    ip: str | None = dc.field(default=None)
-    user_agent: str | None = dc.field(default=None)
-    platform: str | None = dc.field(default=None)
-    timezone: str = dc.field(default='UTC')
+class Info(te.TypedDict, total=False):
+    prefname: str
+    """Current user's preferred name."""
+
+    ip: str
+    """Current user's IP address."""
+
+    user_agent: str
+    """User agent string."""
+
+    platform: str
+    """Platform/OS information."""
+
+    timezone: str
+    """Timezone string in IANA format, e.g., 'America/New_York'."""
 
 
 class ProfileContextSystem(ContextSystem[ProfileContext]):
@@ -65,25 +73,29 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
     async def build(self, context: Context | str) -> ProfileContext:
         # Get basic information
         info = self.provide_info()
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        # Get current timestamp in the specified timezone
+        try:
+            tz = zoneinfo.ZoneInfo(info.get('timezone', 'UTC') or "UTC")
+        except Exception:
+            tz = zoneinfo.ZoneInfo("UTC")
+        timestamp = datetime.datetime.now(tz).isoformat()
 
         # Get location from IP if available
         location = None  # type: Location | None
-        if info.ip and self.ip_service:
+        if info.get('ip') and self.ip_service:
             try:
-                location = await self.ip_service.locate(info.ip)
-            # pylint: disable=broad-except
-            except Exception:
+                location = await self.ip_service.locate(info.get('ip'))
+            except RESTResourceException:
                 # If IP location service fails, continue without location
                 location = None
 
-        return ProfileContext(prefname=info.prefname,
-                              ip=info.ip,
+        return ProfileContext(prefname=info.get('prefname'),
+                              ip=info.get('ip'),
                               location=location,
                               timestamp=timestamp,
-                              timezone=info.timezone,
-                              user_agent=info.user_agent,
-                              platform=info.platform)
+                              timezone=info.get('timezone', 'UTC') or "UTC",
+                              user_agent=info.get('user_agent'),
+                              platform=info.get('platform'))
 
     async def parse(self, built: ProfileContext) -> str:
         return self.template.render(context=built)
