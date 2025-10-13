@@ -12,17 +12,17 @@ from personax.resources import WatchedResource
 @t.runtime_checkable
 class Template(t.Protocol):
 
-    def render(self, **kwargs: t.Any) -> str:
+    def render(self, *args: t.Any, **kwargs: t.Any) -> str:
         pass
 
 
-class WatchedTemplate(WatchedResource[j2.Template]):
+class WatchedTemplate(WatchedResource[j2.Template], Template):
 
     def _parse(self) -> j2.Template:
         content = self.fpath.read_text(encoding='utf-8').strip()
         return j2.Template(content)
 
-    def render(self, **kwargs: t.Any) -> str:
+    def render(self, *args: t.Any, **kwargs: t.Any) -> str:
         if self.data is None:
             raise ResourceException("Template not loaded.")
-        return self.data.render(**kwargs)
+        return self.data.render(*args, **kwargs)
