@@ -157,4 +157,4 @@ class AsyncContextMixin(t.Protocol):
         await self.close()
         if exc_type is not None:
             raise (exc_val or exc_type()).with_traceback(traceback) from exc_val
-        return False
+        return False  # do not suppress exceptions
