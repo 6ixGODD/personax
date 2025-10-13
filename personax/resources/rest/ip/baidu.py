@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools as ft
 import typing as t
 
 import httpx
