@@ -152,7 +152,7 @@ async def chat():
                 response = await persona.complete(messages=Messages(messages=history),
                                                   stream=True)
                 async for chunk in response:
-                    print(chunk.delta.content, end="", flush=True)
+                    print(chunk.delta.content or "", end="", flush=True)
                     assistant_message += chunk.delta.content or ""
                 print("\n")
             else:
