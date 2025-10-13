@@ -7,6 +7,7 @@ import httpx
 import pydantic as pydt
 import typing_extensions as te
 
+from personax.exceptions import RESTResourceException
 from personax.resources.rest.ip import IpLocationService
 from personax.resources.rest.ip import Location
 
@@ -81,24 +82,22 @@ class BaiduIpLocationService(IpLocationService):
                  retry_wait: float = 2.0,
                  http_client: httpx.AsyncClient | None = None):
         self.ak = ak
-        super().__init__(
-            base_url="https://api.map.baidu.com/location/",
-            timeout=timeout,
-            http_client=http_client,
-        )
+        super().__init__(base_url="https://api.map.baidu.com/location/",
+                         timeout=timeout,
+                         http_client=http_client)
         self.max_retries = max_retries
         self.retry_wait = retry_wait
 
     @ft.lru_cache(maxsize=1024)
     async def locate(self, ip: str, /) -> Location:
         params = BaiduLocationParams(ip=ip, ak=self.ak, coor="gcj02")
-        response = await self.request("",
+        response = await self.request("ip",
                                       method="GET",
                                       params=params,
                                       max_retries=self.max_retries,
                                       cast_to=BaiduLocation,
                                       retry_wait=self.retry_wait)
         if response.status != 0:
-            raise ValueError(f"Baidu Location IP Service error: {response.message}")
-        return Location(address=response.address,
+            raise RESTResourceException(f"Baidu Location IP Service error: {response.message}")
+        return Location(address=response.content["address"],
                         adcode=response.content["address_detail"]["adcode"])
