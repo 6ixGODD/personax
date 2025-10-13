@@ -7,7 +7,6 @@ from personax.completion import CompletionSystem
 from personax.context import ContextCompose
 from personax.helpers.mixin import AsyncContextMixin
 from personax.tools import BaseToolType
-from personax.types import BaseModel
 from personax.types.completion import Completion
 from personax.types.completion_chunk import CompletionChunk
 from personax.types.message import Messages
@@ -86,10 +85,6 @@ class PersonaX(AsyncContextMixin, abc.ABC):
     name: t.ClassVar[str]
     version: t.ClassVar[t.Literal["latest"] | str] = "latest"
     scenario: t.ClassVar[t.Literal["default"] | str] = "default"
-
-    @classmethod
-    def from_config(cls, config: BaseModel) -> t.Self:
-        raise NotImplementedError("Subclasses must implement the 'from_config' method.")
 
     @classproperty
     def id(self) -> str:
