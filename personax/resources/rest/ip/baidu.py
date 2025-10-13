@@ -6,6 +6,7 @@ import typing as t
 import httpx
 import pydantic as pydt
 import typing_extensions as te
+import async_lru as alru
 
 from personax.exceptions import RESTResourceException
 from personax.resources.rest.ip import IpLocationService
@@ -88,7 +89,7 @@ class BaiduIpLocationService(IpLocationService):
         self.max_retries = max_retries
         self.retry_wait = retry_wait
 
-    @ft.lru_cache(maxsize=1024)
+    @alru.alru_cache(maxsize=1024)
     async def locate(self, ip: str, /) -> Location:
         params = BaiduLocationParams(ip=ip, ak=self.ak, coor="gcj02")
         response = await self.request("ip",
