@@ -25,7 +25,7 @@ class Message(BaseSchema):
 
 
 class Messages(BaseModel):
-    messages: t.Iterable[Message]
+    messages: t.Sequence[Message]
 
     def _validate(
         self,
@@ -34,7 +34,8 @@ class Messages(BaseModel):
         first_role: t.Literal['system', 'user', 'assistant'] = "user",
         last_role: t.Literal['system', 'user', 'assistant'] = "user",
     ) -> None:
-        iterator = iter(self.messages)
+        messages = list(self.messages)
+        iterator = iter(messages)
         try:
             first = next(iterator)
         except StopIteration as exc:
