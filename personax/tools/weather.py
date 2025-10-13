@@ -5,6 +5,7 @@ import typing as t
 
 import typing_extensions as te
 
+from personax.exceptions import RESTResourceException, ToolCallException
 from personax.resources.rest.weather import WeatherInfoService
 from personax.tools import BaseTool
 from personax.tools import Property
@@ -31,8 +32,8 @@ class GetWeather(BaseTool[[str], Weather]):
     __function_description__ = ("Get the current weather information for a "
                                 "given location by its administrative code.")
 
-    def __init__(self, weatherinfo_service: WeatherInfoService):
-        self.weatherinfo_service = weatherinfo_service
+    def __init__(self, weather_srv: WeatherInfoService):
+        self.weather_srv = weather_srv
 
     def __call__(
         self,
@@ -43,7 +44,11 @@ class GetWeather(BaseTool[[str], Weather]):
                      example="110000"),
         ],
     ) -> Weather:
-        info = aio.run(self.weatherinfo_service.fetch(adcode))
+        try:
+            info = aio.run(self.weather_srv.fetch(adcode))
+        except RESTResourceException as exc:
+            raise ToolCallException(
+                f"Failed to get weather info for adcode {adcode}: {exc}") from exc
         return Weather(location=info["address"],
                        temperature=info["temperature"],
                        condition=info.get("condition", ""),
