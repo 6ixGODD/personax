@@ -28,6 +28,7 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
     Type Parameters:
         BuiltT: The type of structured data this system produces (must be a mapping)
     """
+    __key__: t.ClassVar[str]  # Unique key identifying this context system
 
     async def preprocess(self, context: Context) -> Context:
         """
@@ -78,7 +79,6 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
             String representation for the LLM, or None to omit from final prompt
         """
 
-    @abc.abstractmethod
     async def init(self) -> None:
         """
         Initialize the context system.
@@ -87,7 +87,6 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         Called when entering the async context manager.
         """
 
-    @abc.abstractmethod
     async def close(self) -> None:
         """
         Clean up and close the context system.
@@ -95,6 +94,14 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         This method should release resources and perform cleanup.
         Called when exiting the async context manager.
         """
+
+    def __init_subclass__(cls, **kwargs: t.Any) -> None:
+        super().__init_subclass__(**kwargs)
+        if not hasattr(cls, "__key__"):
+            raise NotImplementedError(
+                f"{cls.__name__} must define a unique __key__ class variable.")
+        if not isinstance(cls.__key__, str) or not cls.__key__:
+            raise ValueError(f"{cls.__name__}.__key__ must be a non-empty string.")
 
     async def __aenter__(self) -> t.Self:
         await self.init()
@@ -110,7 +117,9 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         await self.close()
 
     def __str__(self) -> str:
-        return self.__class__.__name__
+        return f"{self.__class__.__name__}({self.__key__})"
+
+    __repr__ = __str__
 
     # For preparing messages for LLM calls.
     @t.overload
@@ -176,9 +185,7 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]]):
     def __len__(self) -> int:
         return len(self.systems)
 
-    def __init__(self,
-                 *systems: ContextSystem[t.Any],
-                 context_template: Template) -> None:
+    def __init__(self, *systems: ContextSystem[t.Any], context_template: Template) -> None:
         self.systems = systems
         self.context_template = context_template
 
@@ -213,7 +220,7 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]]):
             context = await system.preprocess(context)
             # 2. Build phase: allow each system to add its content
             content = await system.build(context)
-            context.context[str(system)] = content
+            context.context[system.__key__] = content
             # 3. Postprocess phase: allow each system to modify the context again
             context = await system.postprocess(context, content)
 
@@ -236,9 +243,10 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]]):
             CompatMessages with system prompt containing all contextual information
         """
         raw = context.context.copy()
-        parsed = {str(sys): await sys.parse(raw[str(sys)]) for sys in self.systems}
+        parsed = {sys.__key__: await sys.parse(raw[sys.__key__]) for sys in self.systems}
         sys_prompt = self.context_template.render(systems=parsed, raw=raw)
-        return CompatMessages.from_raws(
+        messages = CompatMessages.from_raws(
             raws=Messages.model_construct(messages=context.messages),
             sys_prompt=sys_prompt,
         )
+        return messages

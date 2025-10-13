@@ -49,6 +49,7 @@ class Info:
 
 
 class ProfileContextSystem(ContextSystem[ProfileContext]):
+    __key__ = "profile"
 
     def __init__(
         self,
@@ -86,9 +87,3 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
 
     async def parse(self, built: ProfileContext) -> str:
         return self.template.render(context=built)
-
-    async def init(self) -> None:
-        pass
-
-    async def close(self) -> None:
-        pass
