@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+import os
 import pathlib as p
 import threading
 import typing as t
@@ -28,7 +29,7 @@ T = t.TypeVar("T")
 
 class WatchedResource(abc.ABC, t.Generic[T]):
 
-    def __init__(self, fpath: str | p.Path):
+    def __init__(self, fpath: str | p.Path | os.PathLike[str]):
         self.fpath = p.Path(fpath)
         self.data: T | None = None
         self.backup: T | None = None
