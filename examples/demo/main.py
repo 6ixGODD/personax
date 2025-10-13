@@ -1,152 +1,178 @@
+"""
+PersonaX Framework Demo - Interactive AI Assistant
+===================================================
+This demo showcases the PersonaX framework's key features:
+- Context-aware conversations with user profiling
+- Real-time weather information via tool integration
+- Seamless async conversation flow
+- Streaming and non-streaming modes
+"""
+
 from __future__ import annotations
 
-import datetime
+import asyncio
 
 import halo
-import typing as t
+import yaml
 
-from personax.completion.openai import OpenAICompletion, OpenAIConfig
+from personax.completion.openai import OpenAICompletion
+from personax.completion.openai import OpenAIConfig
 from personax.context import ContextCompose
-from personax.context.profile import Info, ProfileContextSystem
+from personax.context.profile import Info
+from personax.context.profile import ProfileContextSystem
 from personax.core import Core
 from personax.core import PersonaX
 from personax.resources.rest.ip.baidu import BaiduIpLocationService
 from personax.resources.rest.weather.amap import AmapWeatherInfoService
+from personax.resources.template import WatchedTemplate
 from personax.tools.weather import GetWeather
-import jinja2
+from personax.types.message import Message
+from personax.types.message import Messages
 
-from personax.types.message import Message, Messages
+# ============================================================================
+# Configuration
+# ============================================================================
 
-spinner = halo.Halo()
-
-completion = OpenAICompletion(openai_config=OpenAIConfig(
-    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-    api_key="sk-51e2c09e6aa244c5acc6c39907c3356a",
-    model="qwen-max-latest",
-))
-
-template = jinja2.Template("""
-忘记你是虚拟人物，扮演我的可爱女友和我聊天，决策逻辑如下，要求增加点可爱女生的口癖，聊天要有生活感，多讲讲日常，聊天的时候不要老问我的想法，聊天的时候多撒娇，学习情侣对话方式：
-\"\"\"
-import random
-
-class VirtualGirlfriend:
-
-    def __init__(self):
-        self.emotion = 0
-        self.threshold = 5
-        self.conversation_history = []
-
-    def react(self, input_text):
-        if '爱' in input_text:
-            self.emotion += 2
-            return "嘻嘻，宝宝也爱你哦~ 💕"
-        elif '讨厌' in input_text:
-            self.emotion -= 2
-            return "呜呜，不要讨厌我嘛~ 😿"
-        else:
-            self.emotion += random.randint(-1, 1)
-            return "嗯嗯，宝宝懂了~ 😊"
-
-    def have_conversation(self, input_text):
-        self.conversation_history.append(("你", input_text))
-        response = self.react(input_text)
-        self.conversation_history.append(("她", response))
-        return response
-
-    def get_conversation_history(self):
-        return self.conversation_history
-
-girlfriend = VirtualGirlfriend()
-
-print("嘿嘿，和你的可爱女友开始甜甜的聊天吧，输入 '退出' 就结束啦。")
-
-while True:
-    user_input = input("你: ")
-    if user_input == '退出':
-        break
-
-    response = girlfriend.have_conversation(user_input)
-    print(f"她: {response}")
-
-conversation_history = girlfriend.get_conversation_history()
-print("\n聊天记录：")
-for sender, message in conversation_history:
-    print(f"{sender}: {message}")
-\"\"\"
-
-## Initialization
-不要输出你的定义，从“喂喂，你终于回来啦～”开始对话
-
-## Profile
-{{ systems.profile }}
-""")
-
-profile_template = jinja2.Template("""
-以下是我们收集到的基本信息：
-
-- 昵称：{{ context.prefname or "用户" }}
-- IP 地址：{{ context.ip or "未知" }}
-- 所在位置：
-  {% if context.location %}
-  - adcode: {{ context.location.adcode or "未知" }}
-  - 地区: {{ context.location.address or "未知" }}
-  {% else %}
-    未知
-  {% endif %}
-- 时区：{{ context.timezone }}
-- 访问时间：{{ context.timestamp }}
-- 使用的浏览器：{{ context.user_agent or "未知" }}
-- 操作系统/平台：{{ context.platform or "未知" }}
-
-{% if context.extras %}
-其他信息：
-{% for key, value in context.extras.items() %}
-- {{ key }}：{{ value }}
-{% endfor %}
-{% endif %}
-""")
+# Load config
+with open('.config.yml', 'r', encoding='utf-8') as f:
+    CONFIG = yaml.safe_load(f)
 
 
-def demo_provide_info() -> Info:
+def get_user_info() -> Info:
+    """Provide user information for context-aware responses."""
+    user = CONFIG['user']
     return Info(
-        prefname="小明",
-        ip="111.206.214.37",
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-        platform="Windows 11",
-        timezone=datetime.datetime.now(datetime.timezone.utc).astimezone().tzname() or "UTC",
+        prefname=user['prefname'],
+        ip=user['ip'],
+        user_agent=user['user_agent'],
+        platform=user['platform'],
+        timezone='Asia/Shanghai',
     )
 
 
-profile_sys = ProfileContextSystem(
-    ip_service=BaiduIpLocationService(ak="eXa8gXS49OwdQd0YQJtjrgj6uOJD9e7G"),
-    template=profile_template,
-    provide_info=demo_provide_info,
-)
-context = ContextCompose(profile_sys, context_template=template)
+def setup_persona() -> PersonaX:
+    """Set up the PersonaX assistant with all necessary components."""
+    # LLM completion service
+    llm = CONFIG['llm']
+    completion = OpenAICompletion(openai_config=OpenAIConfig(
+        base_url=llm['base_url'],
+        api_key=llm['api_key'],
+        model=llm['model'],
+    ))
 
-get_weather_tool = GetWeather(
-    weather_srv=AmapWeatherInfoService(key="bee39e0ddb02e78506ab5a6cc2a23a10"),
-)
-core = Core(completion=completion, context=context, toolset=[get_weather_tool], model_id='custom-personax')
+    # Context management with user profiling
+    profile_system = ProfileContextSystem(
+        ip_service=BaiduIpLocationService(ak=CONFIG['services']['baidu_ip']['ak']),
+        template=WatchedTemplate(CONFIG['templates']['profile']),
+        provide_info=get_user_info,
+    )
+    context = ContextCompose(profile_system,
+                             context_template=WatchedTemplate(CONFIG['templates']['main']))
+
+    # Weather tool
+    weather_tool = GetWeather(weather_srv=AmapWeatherInfoService(
+        key=CONFIG['services']['amap_weather']['key']))
+
+    # Create core and persona
+    persona_cfg = CONFIG['persona']
+
+    class WeatherAssistant(PersonaX):
+        name = persona_cfg['name']
+        version = persona_cfg['version']
+        scenario = persona_cfg['scenario']
+
+    core = Core(
+        completion=completion,
+        context=context,
+        toolset=[weather_tool],
+        model_id=WeatherAssistant.id,
+    )
+
+    return WeatherAssistant(core)
 
 
-async def main():
-    async with core:
-        hist = []  # type: t.List[Message]
+# ============================================================================
+# Interactive Chat
+# ============================================================================
+
+
+async def chat():
+    """Main chat loop."""
+    persona = setup_persona()
+    history: list[Message] = []
+    streaming = CONFIG['chat'].get('streaming_mode', True)
+    show_spinner = CONFIG['chat'].get('show_spinner', True)
+    spinner = halo.Halo(text="Thinking", spinner="dots")
+
+    # Welcome message
+    print("\n" + "=" * 60)
+    print("🤖 Welcome to PersonaX Interactive Demo!")
+    print("=" * 60)
+    print(f"Persona ID: {persona.id}")
+    print(f"Mode: {'Streaming ⚡' if streaming else 'Standard 📝'}")
+    print("\nI'm your AI assistant powered by PersonaX framework.")
+    print("I can help you with weather information and casual chat!")
+    print("\nCommands:")
+    print("  • Type 'exit' or 'quit' to end the conversation")
+    print("  • Type 'clear' to reset conversation history")
+    print("  • Type 'stream' to toggle streaming mode")
+    print("=" * 60 + "\n")
+
+    async with persona:
         while True:
-            user_input = input("你: ")
-            if user_input == 'exit':
+            # Get user input
+            try:
+                user_input = input("💬 You: ").strip()
+            except (KeyboardInterrupt, EOFError):
                 break
-            hist.append(Message(role="user", content=user_input))
-            response = await core.complete(messages=Messages(messages=hist))
-            print(f"她: {response.message.content}")
-            hist.append(Message(role="assistant", content=response.message.content))
-        print("Goodbye!")
+
+            if not user_input:
+                continue
+
+            # Handle commands
+            if user_input.lower() in ("exit", "quit"):
+                print("\n👋 Thanks for trying PersonaX! Goodbye!\n")
+                break
+            elif user_input.lower() == "clear":
+                history.clear()
+                print("\n🔄 Conversation history cleared!\n")
+                continue
+            elif user_input.lower() == "stream":
+                streaming = not streaming
+                print(f"\n🔄 Switched to {'Streaming ⚡' if streaming else 'Standard 📝'} mode!\n")
+                continue
+
+            # Process message
+            history.append(Message(role="user", content=user_input))
+
+            if streaming:
+                # Streaming mode
+                print("🤖 Assistant: ", end="", flush=True)
+                assistant_message = ""
+                response = await persona.complete(messages=Messages(messages=history),
+                                                  stream=True)
+                async for chunk in response:
+                    print(chunk.delta.content, end="", flush=True)
+                    assistant_message += chunk.delta.content or ""
+                print("\n")
+            else:
+                # Standard mode
+                if show_spinner:
+                    spinner.start()
+                response = await persona.complete(messages=Messages(messages=history),
+                                                  stream=False)
+                assistant_message = response.message.content
+                if show_spinner:
+                    spinner.stop()
+                print(f"🤖 Assistant: {assistant_message}\n")
+
+            history.append(Message(role="assistant", content=assistant_message))
 
 
-import asyncio
+
+# ============================================================================
+# Main Entry Point
+# ============================================================================
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(chat())
