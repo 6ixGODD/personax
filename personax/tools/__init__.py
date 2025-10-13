@@ -212,8 +212,10 @@ def _extract_property_from_annotation(annotation: t.Any,) -> t.Tuple[type, Prope
     return annotation, None
 
 
+_ReturnType: t.TypeAlias = t.Union[str, JsonObject, t.Sequence[JsonObject], None]
+ReturnType: t.TypeAlias = _ReturnType | t.Awaitable[_ReturnType]
 P = t.ParamSpec('P')
-R = t.TypeVar('R', bound=t.Union[str, JsonObject, t.Sequence[JsonObject], None])
+R = t.TypeVar('R', bound=ReturnType)
 
 
 class BaseTool(t.Generic[P, R], abc.ABC):
@@ -312,4 +314,4 @@ class BaseTool(t.Generic[P, R], abc.ABC):
         return hash(self.__function_name__)
 
 
-BaseToolType: t.TypeAlias = BaseTool[t.Any, t.Union[str, JsonObject, t.Sequence[JsonObject], None]]
+BaseToolType: t.TypeAlias = BaseTool[t.Any, ReturnType]
