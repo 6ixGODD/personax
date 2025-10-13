@@ -12,6 +12,7 @@ import openai.types.chat.chat_completion_message_function_tool_call_param as fn_
 from openai.types.chat import ChatCompletion
 
 from personax.completion import CompletionSystem
+from personax.exceptions import ToolCallException
 from personax.tools import BaseToolType
 from personax.types import BaseModel
 from personax.types.compat.message import Message
@@ -96,7 +97,7 @@ class OpenAICompletion(CompletionSystem):
                        stream: bool = False,
                        max_completion_tokens: int | Unset = UNSET,
                        model: str,
-                       _prompt_cache_key: str | Unset = UNSET,
+                       prompt_cache_key: str | Unset = UNSET,
                        **kwargs: t.Any) -> Completion | AsyncStream[CompletionChunk]:
         msg_count = len(list(messages))
         tool_names = [tool.__function_name__ for tool in tools]
@@ -111,7 +112,7 @@ class OpenAICompletion(CompletionSystem):
                                                chatcmpl_id=chatcmpl_id,
                                                max_completion_tokens=max_completion_tokens,
                                                model=model,
-                                               prompt_cache_key=_prompt_cache_key,
+                                               prompt_cache_key=prompt_cache_key,
                                                **kwargs)
         logger.debug("Routing to sync completion")
         return await self._sync_complete(messages=messages.messages,
@@ -119,7 +120,7 @@ class OpenAICompletion(CompletionSystem):
                                          chatcmpl_id=chatcmpl_id,
                                          max_completion_tokens=max_completion_tokens,
                                          model=model,
-                                         prompt_cache_key=_prompt_cache_key,
+                                         prompt_cache_key=prompt_cache_key,
                                          **kwargs)
 
     async def _sync_complete(self,
@@ -213,7 +214,11 @@ class OpenAICompletion(CompletionSystem):
                         logger.debug("Tool args: %s", args)
 
                         start_time = time.time()
-                        result = tools_map[func_name](**args)
+                        try:
+                            result = tools_map[func_name](**args)
+                        except ToolCallException as e:
+                            logger.error("Error executing tool %s: %s", func_name, str(e))
+                            result = f"Error executing tool {func_name}"
                         exec_time = time.time() - start_time
 
                         logger.debug("Tool %s executed in %.3fs", func_name, exec_time)
@@ -277,7 +282,7 @@ class OpenAICompletion(CompletionSystem):
                                model: str,
                                prompt_cache_key: str | Unset = UNSET,
                                **kwargs: t.Any) -> AsyncStream[CompletionChunk]:
-        msg_list: t.List[Message | ToolCalls | ToolCallsParams] = list(messages)
+        msg_list = list(messages)  # type: t.List[Message | ToolCalls | ToolCallsParams]
         tools_map = {tool.__function_name__: tool for tool in tools}
 
         logger.debug("Stream completion started with %s initial messages", len(msg_list))
@@ -437,7 +442,11 @@ class OpenAICompletion(CompletionSystem):
                             args = json.loads(args_str)
 
                             start_time = time.time()
-                            result = tools_map[func_name](**args)
+                            try:
+                                result = tools_map[func_name](**args)
+                            except ToolCallException as e:
+                                logger.error("Error executing tool %s: %s", func_name, str(e))
+                                result = f"Error executing tool {func_name}"
                             exec_time = time.time() - start_time
 
                             logger.debug("Stream tool %s executed in %.3fs", func_name, exec_time)
@@ -484,7 +493,11 @@ class OpenAICompletion(CompletionSystem):
 
         for i, msg in enumerate(messages):
             if isinstance(msg, Message):
-                if msg.role == "user":
+                if msg.role == "system":
+                    msgs.append(
+                        chat_t.ChatCompletionSystemMessageParam(role="system", content=msg.content))
+                    logger.debug("Built system message %s: %s chars", i, len(msg.content))
+                elif msg.role == "user":
                     msgs.append(
                         chat_t.ChatCompletionUserMessageParam(role="user", content=msg.content))
                     logger.debug("Built user message %s: %s chars", i, len(msg.content))
