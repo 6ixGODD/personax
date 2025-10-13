@@ -26,8 +26,8 @@ services:
 
 # Template Paths
 templates:
-  main: "../../tmpl/prompt.j2"
-  profile: "../../tmpl/context/profile.j2"
+  main: "../../prompts/prompt.j2"
+  profile: "../../prompts/context/profile.j2"
 
 # Persona Settings
 persona:
