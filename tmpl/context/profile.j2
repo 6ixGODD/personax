@@ -1,0 +1,19 @@
+Here is the basic information we have collected about user:
+
+- **Nickname:** {{ context.prefname or "User" }}
+- **IP Address:** {{ context.ip or "Unknown" }}
+- **Location:**
+  {% if context.location %}- **Adcode:** {{ context.location.adcode or "Unknown" }}
+  - **Region:** {{ context.location.address or "Unknown" }}
+  {% else %}Unknown
+  {% endif %}
+- **Timezone:** {{ context.timezone }}
+- **Access Time:** {{ context.timestamp }}
+- **Browser:** {{ context.user_agent or "Unknown" }}
+- **Platform / OS:** {{ context.platform or "Unknown" }}
+{% if context.extras %}
+**Additional Information:**
+{% for key, value in context.extras.items() %}
+- {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
