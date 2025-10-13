@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import abc
 import typing as t
 
 from personax.completion import CompletionSystem
@@ -79,7 +78,7 @@ class Core(AsyncContextMixin):
                                               model=self.model_id)
 
 
-class PersonaX(AsyncContextMixin, abc.ABC):
+class PersonaX(AsyncContextMixin):
     core: Core
 
     name: t.ClassVar[str]
@@ -105,6 +104,9 @@ class PersonaX(AsyncContextMixin, abc.ABC):
 
     def __hash__(self) -> int:
         return hash(self.id)
+
+    def __init__(self, core: Core) -> None:
+        self.core = core
 
     async def init(self) -> None:
         await self.core.init()
