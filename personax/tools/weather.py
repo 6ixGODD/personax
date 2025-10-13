@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio as aio
 import typing as t
 
 import typing_extensions as te
