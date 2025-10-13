@@ -35,7 +35,7 @@ class GetWeather(BaseTool[[str], Weather]):
     def __init__(self, weather_srv: WeatherInfoService):
         self.weather_srv = weather_srv
 
-    def __call__(
+    async def __call__(
         self,
         adcode: t.Annotated[
             str,
@@ -45,7 +45,7 @@ class GetWeather(BaseTool[[str], Weather]):
         ],
     ) -> Weather:
         try:
-            info = aio.run(self.weather_srv.fetch(adcode))
+            info = await self.weather_srv.fetch(adcode)
         except RESTResourceException as exc:
             raise ToolCallException(
                 f"Failed to get weather info for adcode {adcode}: {exc}") from exc
