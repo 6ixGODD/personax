@@ -7,7 +7,7 @@ import httpx
 import pydantic as pydt
 import tenacity
 
-from personax.helpers.mixin import AsyncContextMixin
+from personax.utils import AsyncContextMixin
 
 RespT = t.TypeVar("RespT", bound=pydt.BaseModel)
 

@@ -149,8 +149,7 @@ async def chat():
                 # Streaming mode
                 print("🤖 Assistant: ", end="", flush=True)
                 assistant_message = ""
-                response = await persona.complete(messages=Messages(messages=history),
-                                                  stream=True)
+                response = await persona.complete(messages=Messages(messages=history), stream=True)
                 async for chunk in response:
                     print(chunk.delta.content or "", end="", flush=True)
                     assistant_message += chunk.delta.content or ""
@@ -159,15 +158,13 @@ async def chat():
                 # Standard mode
                 if show_spinner:
                     spinner.start()
-                response = await persona.complete(messages=Messages(messages=history),
-                                                  stream=False)
+                response = await persona.complete(messages=Messages(messages=history), stream=False)
                 assistant_message = response.message.content
                 if show_spinner:
                     spinner.stop()
                 print(f"🤖 Assistant: {assistant_message}\n")
 
             history.append(Message(role="assistant", content=assistant_message))
-
 
 
 # ============================================================================

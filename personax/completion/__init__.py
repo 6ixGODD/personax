@@ -3,12 +3,12 @@ from __future__ import annotations
 import abc
 import typing as t
 
-from personax.helpers.mixin import AsyncContextMixin
 from personax.tools import BaseToolType
+from personax.types.compat.message import Messages
 from personax.types.completion import Completion
 from personax.types.completion_chunk import CompletionChunk
-from personax.types.compat.message import Messages
 from personax.types.stream import AsyncStream
+from personax.utils import AsyncContextMixin
 from personax.utils import UNSET
 from personax.utils import Unset
 

@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import datetime as dt
 import functools as ft
 import inspect
 import threading
 import typing as t
-import hashlib
-import uuid
 
 _C = t.TypeVar("_C")
 
@@ -46,17 +43,6 @@ def singleton(cls: t.Type[_C]) -> t.Callable[..., _C]:
         return instances[cls]
 
     return get_instance
-
-
-def gen_id(pref: str = "", suf: str = "", without_hyphen: bool = True) -> str:
-    uuid_str = str(uuid.uuid4())
-    if without_hyphen:
-        uuid_str = uuid_str.replace("-", "")
-    return f"{pref}{uuid_str}{suf}"
-
-
-def utc_now() -> dt.datetime:
-    return dt.datetime.now(dt.UTC)
 
 
 # pylint: disable=invalid-name
@@ -143,5 +129,32 @@ def flatten_dict(
     return dict(items)
 
 
-def sha256(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
+
+import types
+import typing as t
+
+
+@t.runtime_checkable
+class AsyncContextMixin(t.Protocol):
+
+    async def init(self) -> None:
+        pass
+
+    async def close(self) -> None:
+        pass
+
+    async def __aenter__(self) -> t.Self:
+        await self.init()
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: t.Type[BaseException] | None,
+        exc_val: BaseException | None,
+        traceback: types.TracebackType | None,
+        /,
+    ) -> t.Literal[False]:
+        await self.close()
+        if exc_type is not None:
+            raise (exc_val or exc_type()).with_traceback(traceback) from exc_val
+        return False
