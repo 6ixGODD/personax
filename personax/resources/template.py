@@ -4,6 +4,7 @@ import typing as t
 
 import jinja2 as j2
 
+from personax.exceptions import ResourceException
 from personax.resources import WatchedResource
 
 
@@ -18,7 +19,10 @@ class Template(t.Protocol):
 class WatchedTemplate(WatchedResource[j2.Template]):
 
     def _parse(self) -> j2.Template:
-        pass
+        content = self.fpath.read_text(encoding='utf-8').strip()
+        return j2.Template(content)
 
     def render(self, **kwargs: t.Any) -> str:
-        pass
+        if self.data is None:
+            raise ResourceException("Template not loaded.")
+        return self.data.render(**kwargs)
