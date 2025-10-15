@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools as ft
 import inspect
 import threading
+import types
 import typing as t
 
 _C = t.TypeVar("_C")
@@ -127,11 +128,6 @@ def flatten_dict(
         else:
             items.append((key, v))
     return dict(items)
-
-
-
-import types
-import typing as t
 
 
 @t.runtime_checkable
