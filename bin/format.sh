@@ -46,7 +46,7 @@ run_isort() {
         return 1
     fi
 
-    if $POETRY_CMD run isort "$TARGET_DIR" --profile black; then
+    if $POETRY_CMD run isort "$TARGET_DIR"; then
         log_success "isort complete"
         return 0
     else
@@ -64,7 +64,7 @@ run_yapf() {
         return 1
     fi
 
-    if $POETRY_CMD run yapf -i -r "$TARGET_DIR" --style="{based_on_style: google, indent_width: 4}"; then
+    if $POETRY_CMD run yapf -i -r "$TARGET_DIR"; then
         log_success "yapf complete"
         return 0
     else

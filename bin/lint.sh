@@ -46,7 +46,7 @@ run_mypy() {
         return 1
     fi
 
-    if $POETRY_CMD run mypy "$TARGET_DIR" --ignore-missing-imports --no-error-summary 2>/dev/null; then
+    if $POETRY_CMD run mypy "$TARGET_DIR" 2>/dev/null; then
         log_success "✓ mypy: No type errors found"
         return 0
     else
@@ -65,7 +65,7 @@ run_pylint() {
     fi
 
     # Run pylint and capture exit code
-    if $POETRY_CMD run pylint "$TARGET_DIR" --exit-zero --score=yes 2>/dev/null; then
+    if $POETRY_CMD run pylint "$TARGET_DIR" 2>/dev/null; then
         log_success "✓ pylint: Check complete"
         return 0
     else
