@@ -14,7 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Source common utilities
 # shellcheck source=bin/common.sh
-. "$SCRIPT_DIR/common.sh"
+. "$SCRIPT_DIR/tools/common.sh"
 
 # Variables
 TARGET_DIR="${1:-personax}"

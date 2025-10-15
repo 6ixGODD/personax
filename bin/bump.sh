@@ -16,7 +16,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Source common utilities
 # shellcheck source=bin/tools/common.sh
-. "$SCRIPT_DIR/common.sh"
+. "$SCRIPT_DIR/tools/common.sh"
 
 # ============================================================================
 # Configuration
