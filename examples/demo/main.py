@@ -24,7 +24,7 @@ from personax.core import Core
 from personax.core import PersonaX
 from personax.resources.rest.ip.baidu import BaiduIpLocationService
 from personax.resources.rest.weather.amap import AmapWeatherInfoService
-from personax.resources.template import WatchedTemplate
+from personax.resources.template import WatchedJ2Template
 from personax.tools.weather import GetWeather
 from personax.types.message import Message
 from personax.types.message import Messages
@@ -63,11 +63,11 @@ def setup_persona() -> PersonaX:
     # Context management with user profiling
     profile_system = ProfileContextSystem(
         ip_service=BaiduIpLocationService(ak=CONFIG['services']['baidu_ip']['ak']),
-        template=WatchedTemplate(CONFIG['templates']['profile']),
+        template=WatchedJ2Template(CONFIG['templates']['profile']),
         provide_info=get_user_info,
     )
     context = ContextCompose(profile_system,
-                             context_template=WatchedTemplate(CONFIG['templates']['main']))
+                             context_template=WatchedJ2Template(CONFIG['templates']['main']))
 
     # Weather tool
     weather_tool = GetWeather(weather_srv=AmapWeatherInfoService(
