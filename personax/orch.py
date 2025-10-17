@@ -27,6 +27,12 @@ class Orch(t.MutableMapping[str, PersonaX]):
             raise KeyError(f"Persona with id '{persona_id}' is not registered.")
         return self._ins[persona_id]
 
+    def list(self) -> t.List[PersonaX]:
+        return list(self._ins.values())
+
+    def keys(self) -> t.KeysView[str]:
+        return self._ins.keys()
+
     def __getitem__(self, key: str, /) -> PersonaX:
         return self.get(key)
 
