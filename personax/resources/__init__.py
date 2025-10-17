@@ -30,17 +30,14 @@ class FileHandler(evt.FileSystemEventHandler):
 T = t.TypeVar("T")
 
 
-class WatchedResource(abc.ABC, t.Generic[T], os.PathLike[str]):
+class Resource(abc.ABC, t.Generic[T], os.PathLike[str]):
 
     def __init__(self, fpath: str | p.Path | os.PathLike[str]):
         self.fpath = p.Path(fpath)
         self.data: T | None = None
         self.backup: T | None = None
         self.lock = threading.RLock()
-        self.observer: t.Optional[obsrv_api.BaseObserver] = None
-
         self.load()
-        self.watch()
 
     @abc.abstractmethod
     def _parse(self) -> T:
@@ -56,6 +53,17 @@ class WatchedResource(abc.ABC, t.Generic[T], os.PathLike[str]):
         except Exception:
             if self.backup is not None:
                 self.data = self.backup
+
+    def __fspath__(self) -> str:
+        return str(self.fpath)
+
+
+class WatchedResource(Resource[T], abc.ABC):
+
+    def __init__(self, fpath: str | p.Path | os.PathLike[str]):
+        super().__init__(fpath)
+        self.observer: t.Optional[obsrv_api.BaseObserver] = None
+        self.watch()
 
     def watch(self) -> None:
         if not self.fpath.exists():
@@ -73,6 +81,3 @@ class WatchedResource(abc.ABC, t.Generic[T], os.PathLike[str]):
 
     def __del__(self) -> None:
         self.stop()
-
-    def __fspath__(self) -> str:
-        return str(self.fpath)
