@@ -89,13 +89,15 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
                 # If IP location service fails, continue without location
                 location = None
 
-        return ProfileContext(prefname=info.get('prefname'),
-                              ip=info.get('ip'),
-                              location=location,
-                              timestamp=timestamp,
-                              timezone=info.get('timezone', 'UTC') or "UTC",
-                              user_agent=info.get('user_agent'),
-                              platform=info.get('platform'))
+        return ProfileContext(
+            prefname=info.get('prefname'),
+            ip=info.get('ip'),
+            location=location,
+            timestamp=timestamp,
+            timezone=info.get('timezone', 'UTC') or "UTC",
+            user_agent=info.get('user_agent'),
+            platform=info.get('platform')
+        )
 
     async def parse(self, built: ProfileContext) -> str:
         return self.template.render(context=built)

@@ -28,8 +28,10 @@ class Weather(te.TypedDict, total=False):
 
 
 class GetWeather(BaseTool[[str], Weather]):
-    __function_description__ = ("Get the current weather information for a "
-                                "given location by its administrative code.")
+    __function_description__ = (
+        "Get the current weather information for a "
+        "given location by its administrative code."
+    )
 
     def __init__(self, weather_srv: WeatherInfoService):
         self.weather_srv = weather_srv
@@ -38,18 +40,23 @@ class GetWeather(BaseTool[[str], Weather]):
         self,
         adcode: t.Annotated[
             str,
-            Property(description="The administrative code of the location to get "
-                     "the weather for.",
-                     example="110000"),
+            Property(
+                description="The administrative code of the location to get "
+                "the weather for.",
+                example="110000"
+            ),
         ],
     ) -> Weather:
         try:
             info = await self.weather_srv.fetch(adcode)
         except RESTResourceException as exc:
             raise ToolCallException(
-                f"Failed to get weather info for adcode {adcode}: {exc}") from exc
-        return Weather(location=info["address"],
-                       temperature=info["temperature"],
-                       condition=info.get("condition", ""),
-                       humidity=info.get("humidity", ""),
-                       windpower=info.get("windpower", ""))
+                f"Failed to get weather info for adcode {adcode}: {exc}"
+            ) from exc
+        return Weather(
+            location=info["address"],
+            temperature=info["temperature"],
+            condition=info.get("condition", ""),
+            humidity=info.get("humidity", ""),
+            windpower=info.get("windpower", "")
+        )

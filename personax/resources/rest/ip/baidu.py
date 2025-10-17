@@ -74,30 +74,38 @@ class BaiduLocation(pydt.BaseModel):
 
 class BaiduIpLocationService(IpLocationService):
 
-    def __init__(self,
-                 ak: str,
-                 *,
-                 timeout: float = 10.0,
-                 max_retries: int = 3,
-                 retry_wait: float = 2.0,
-                 http_client: httpx.AsyncClient | None = None):
+    def __init__(
+        self,
+        ak: str,
+        *,
+        timeout: float = 10.0,
+        max_retries: int = 3,
+        retry_wait: float = 2.0,
+        http_client: httpx.AsyncClient | None = None
+    ):
         self.ak = ak
-        super().__init__(base_url="https://api.map.baidu.com/location/",
-                         timeout=timeout,
-                         http_client=http_client)
+        super().__init__(
+            base_url="https://api.map.baidu.com/location/",
+            timeout=timeout,
+            http_client=http_client
+        )
         self.max_retries = max_retries
         self.retry_wait = retry_wait
 
     @alru.alru_cache(maxsize=1024)
     async def locate(self, ip: str, /) -> Location:
         params = BaiduLocationParams(ip=ip, ak=self.ak, coor="gcj02")
-        response = await self.request("ip",
-                                      method="GET",
-                                      params=params,
-                                      max_retries=self.max_retries,
-                                      cast_to=BaiduLocation,
-                                      retry_wait=self.retry_wait)
+        response = await self.request(
+            "ip",
+            method="GET",
+            params=params,
+            max_retries=self.max_retries,
+            cast_to=BaiduLocation,
+            retry_wait=self.retry_wait
+        )
         if response.status != 0:
             raise RESTResourceException(f"Baidu Location IP Service error: {response.message}")
-        return Location(address=response.content["address"],
-                        adcode=response.content["address_detail"]["adcode"])
+        return Location(
+            address=response.content["address"],
+            adcode=response.content["address_detail"]["adcode"]
+        )

@@ -31,7 +31,8 @@ class BaseSchema:
         if not isinstance(other, self.__class__):
             return False
         return all(
-            getattr(self, slot, None) == getattr(other, slot, None) for slot in self.__slots__)
+            getattr(self, slot, None) == getattr(other, slot, None) for slot in self.__slots__
+        )
 
     def __repr__(self) -> str:
         attrs = ", ".join(f"{slot}={getattr(self, slot, None)!r}" for slot in self.__slots__)

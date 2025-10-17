@@ -70,12 +70,9 @@ class AmapWeatherInfo(pydt.BaseModel):
 
 class AmapWeatherInfoService(WeatherInfoService):
 
-    def __init__(self,
-                 key: str,
-                 *,
-                 timeout: float = 5.0,
-                 max_retries: int = 3,
-                 retry_wait: float = 2.0):
+    def __init__(
+        self, key: str, *, timeout: float = 5.0, max_retries: int = 3, retry_wait: float = 2.0
+    ):
         self.key = key
         super().__init__(base_url="https://restapi.amap.com/v3/weather/", timeout=timeout)
         self.max_retries = max_retries
@@ -83,22 +80,26 @@ class AmapWeatherInfoService(WeatherInfoService):
 
     async def fetch(self, adcode: str, /) -> WeatherInfo:
         params = AmapWeatherInfoParams(key=self.key, city=adcode, extensions="base", output="JSON")
-        response = await self.request(endpoint="weatherInfo",
-                                      method="GET",
-                                      params=params,
-                                      cast_to=AmapWeatherInfo,
-                                      max_retries=self.max_retries,
-                                      retry_wait=self.retry_wait)
+        response = await self.request(
+            endpoint="weatherInfo",
+            method="GET",
+            params=params,
+            cast_to=AmapWeatherInfo,
+            max_retries=self.max_retries,
+            retry_wait=self.retry_wait
+        )
         if response.status != "1" or response.infocode != "10000":
             raise RESTResourceException(f"Failed to fetch weather data: {response.info}")
         if not response.lives or len(response.lives) == 0:
             raise RESTResourceException("No live weather data available")
         live = response.lives[0]
 
-        return WeatherInfo(address=f'{live["province"]} {live["city"]}',
-                           condition=live["weather"],
-                           temperature=live["temperature"],
-                           winddirection=live["winddirection"],
-                           windpower=live["windpower"],
-                           humidity=live["humidity"],
-                           reporttime=live["reporttime"])
+        return WeatherInfo(
+            address=f'{live["province"]} {live["city"]}',
+            condition=live["weather"],
+            temperature=live["temperature"],
+            winddirection=live["winddirection"],
+            windpower=live["windpower"],
+            humidity=live["humidity"],
+            reporttime=live["reporttime"]
+        )

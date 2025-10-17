@@ -98,7 +98,8 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT], AsyncContextMixin):
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, "__key__"):
             raise NotImplementedError(
-                f"{cls.__name__} must define a unique __key__ class variable.")
+                f"{cls.__name__} must define a unique __key__ class variable."
+            )
         if not isinstance(cls.__key__, str) or not cls.__key__:
             raise ValueError(f"{cls.__name__}.__key__ must be a non-empty string.")
 

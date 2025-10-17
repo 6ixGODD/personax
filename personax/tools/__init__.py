@@ -87,9 +87,10 @@ class ToolSchema(pydt.BaseModel):
 
 # pylint: disable=too-few-public-methods
 class Property:
-    __slots__ = ("description", "enums", "minimum", "maximum", "min_length", "max_length",
-                 "pattern", "format", "default", "examples", "min_items", "max_items",
-                 "unique_items", "extra")
+    __slots__ = (
+        "description", "enums", "minimum", "maximum", "min_length", "max_length", "pattern",
+        "format", "default", "examples", "min_items", "max_items", "unique_items", "extra"
+    )
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -266,8 +267,10 @@ class BaseTool(t.Generic[P, R], abc.ABC):
             property_schema = PropertySchema(
                 type=json_type,
                 description=prop_desc.description if prop_desc else None,
-                enum=(prop_desc.enums
-                      if prop_desc and prop_desc.enums else _get_literal_enum_values(actual_type)),
+                enum=(
+                    prop_desc.enums
+                    if prop_desc and prop_desc.enums else _get_literal_enum_values(actual_type)
+                ),
                 items=_get_array_items_schema(actual_type),
                 minimum=prop_desc.minimum if prop_desc else None,
                 maximum=prop_desc.maximum if prop_desc else None,
@@ -293,12 +296,16 @@ class BaseTool(t.Generic[P, R], abc.ABC):
             if param.default is inspect.Parameter.empty:
                 required.append(param_name)
 
-        return ToolSchema(function=FunctionSchema(
-            name=self.__function_name__,
-            description=self.__function_description__,
-            parameters=(
-                ParameterSchema(properties=properties, required=required) if properties else None),
-        ))
+        return ToolSchema(
+            function=FunctionSchema(
+                name=self.__function_name__,
+                description=self.__function_description__,
+                parameters=(
+                    ParameterSchema(properties=properties, required=required)
+                    if properties else None
+                ),
+            )
+        )
 
     @property
     def schema_dict(self) -> t.Dict[str, JsonValue]:

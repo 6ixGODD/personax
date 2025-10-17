@@ -35,7 +35,9 @@ class Messages(RawMessages):
 
     @classmethod
     def from_raws(cls, raws: RawMessages, sys_prompt: str) -> t.Self:
-        return cls.model_construct(messages=[
-            Message(role="system", content=sys_prompt),
-            *[Message(role=msg.role, content=msg.content or '') for msg in raws.messages],
-        ])
+        return cls.model_construct(
+            messages=[
+                Message(role="system", content=sys_prompt),
+                *[Message(role=msg.role, content=msg.content or '') for msg in raws.messages],
+            ]
+        )

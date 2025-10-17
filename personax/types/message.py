@@ -53,8 +53,10 @@ class Messages(BaseModel):
         prev = first
         last = first
         for curr in iterator:
-            if (curr.role not in ("user", "assistant")
-                    and not (allow_system and curr.role == "system")):
+            if (
+                curr.role not in ("user", "assistant")
+                and not (allow_system and curr.role == "system")
+            ):
                 raise ValueError(f"Invalid role: {curr.role!r}")
             if prev.role == curr.role:
                 raise ValueError("Messages must alternate between 'user' and 'assistant'")

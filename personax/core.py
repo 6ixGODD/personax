@@ -30,8 +30,10 @@ def build_id(
     Returns:
         A formatted ID string in the format: name[-version][@scenario]
     """
-    return (f"{name}" + (f"-{version}" if version != "latest" else "") +
-            (f"@{scenario}" if scenario != "default" else ""))
+    return (
+        f"{name}" + (f"-{version}" if version != "latest" else "") +
+        (f"@{scenario}" if scenario != "default" else "")
+    )
 
 
 class Core(AsyncContextMixin):
@@ -69,13 +71,15 @@ class Core(AsyncContextMixin):
     ) -> Completion | AsyncStream[CompletionChunk]:
         messages = await self.context.build(messages)
         toolset = list(self.toolset)
-        return await self.completion.complete(messages=messages,
-                                              chatcmpl_id=chatcmpl_id,
-                                              stream=stream,
-                                              max_completion_tokens=max_completion_tokens,
-                                              prompt_cache_key=prompt_cache_key,
-                                              tools=toolset,
-                                              model=self.model_id)
+        return await self.completion.complete(
+            messages=messages,
+            chatcmpl_id=chatcmpl_id,
+            stream=stream,
+            max_completion_tokens=max_completion_tokens,
+            prompt_cache_key=prompt_cache_key,
+            tools=toolset,
+            model=self.model_id
+        )
 
 
 class PersonaX(AsyncContextMixin):
@@ -99,8 +103,10 @@ class PersonaX(AsyncContextMixin):
         return f"<{self.__class__.__name__} {self.id}>"
 
     def __repr__(self) -> str:
-        return (f"{self.__class__.__name__}(name=\"{self.name}\", version=\"{self.version}\","
-                f"scenario=\"{self.scenario}\")")
+        return (
+            f"{self.__class__.__name__}(name=\"{self.name}\", version=\"{self.version}\","
+            f"scenario=\"{self.scenario}\")"
+        )
 
     def __hash__(self) -> int:
         return hash(self.id)
@@ -123,8 +129,10 @@ class PersonaX(AsyncContextMixin):
         max_completion_tokens: int | Unset = UNSET,
         prompt_cache_key: str | Unset = UNSET,
     ) -> Completion | AsyncStream[CompletionChunk]:
-        return await self.core.complete(messages=messages,
-                                        chatcmpl_id=chatcmpl_id,
-                                        stream=stream,
-                                        max_completion_tokens=max_completion_tokens,
-                                        prompt_cache_key=prompt_cache_key)
+        return await self.core.complete(
+            messages=messages,
+            chatcmpl_id=chatcmpl_id,
+            stream=stream,
+            max_completion_tokens=max_completion_tokens,
+            prompt_cache_key=prompt_cache_key
+        )

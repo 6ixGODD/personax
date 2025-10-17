@@ -18,16 +18,19 @@ class FileHandler(evt.FileSystemEventHandler):
         self.fpath = fpath
 
     def on_modified(self, event: evt.FileModifiedEvent | evt.DirModifiedEvent) -> None:
-        if (not event.is_directory
-                and (p.Path(event.src_path if isinstance(event.src_path, str) else event.src_path.
-                            decode('utf-8')) == self.fpath)):
+        if not event.is_directory and (
+            p.Path(
+                event.src_path if isinstance(event.src_path, str) else event.src_path.
+                decode('utf-8')
+            ) == self.fpath
+        ):
             self.callback()
 
 
 T = t.TypeVar("T")
 
 
-class WatchedResource(abc.ABC, t.Generic[T]):
+class WatchedResource(abc.ABC, t.Generic[T], os.PathLike[str]):
 
     def __init__(self, fpath: str | p.Path | os.PathLike[str]):
         self.fpath = p.Path(fpath)
@@ -70,3 +73,6 @@ class WatchedResource(abc.ABC, t.Generic[T]):
 
     def __del__(self) -> None:
         self.stop()
+
+    def __fspath__(self) -> str:
+        return str(self.fpath)

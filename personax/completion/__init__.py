@@ -16,14 +16,16 @@ from personax.utils import Unset
 class CompletionSystem(AsyncContextMixin, abc.ABC):
 
     @abc.abstractmethod
-    async def complete(self,
-                       messages: Messages,
-                       *,
-                       tools: t.Sequence[BaseToolType] = (),
-                       chatcmpl_id: str | Unset = UNSET,
-                       stream: bool = False,
-                       max_completion_tokens: int | Unset = UNSET,
-                       model: str,
-                       _prompt_cache_key: str | Unset = UNSET,
-                       **kwargs: t.Any) -> Completion | AsyncStream[CompletionChunk]:
+    async def complete(
+        self,
+        messages: Messages,
+        *,
+        tools: t.Sequence[BaseToolType] = (),
+        chatcmpl_id: str | Unset = UNSET,
+        stream: bool = False,
+        max_completion_tokens: int | Unset = UNSET,
+        model: str,
+        _prompt_cache_key: str | Unset = UNSET,
+        **kwargs: t.Any
+    ) -> Completion | AsyncStream[CompletionChunk]:
         ...
