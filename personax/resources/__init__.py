@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+import logging
 import os
 import pathlib as p
 import threading
@@ -10,6 +11,8 @@ import watchdog.events as evt
 import watchdog.observers as obsrv
 import watchdog.observers.api as obsrv_api
 
+logger = logging.getLogger('personax.resources')
+
 
 class FileHandler(evt.FileSystemEventHandler):
 
@@ -18,8 +21,8 @@ class FileHandler(evt.FileSystemEventHandler):
         self.fpath = fpath
 
     def on_modified(self, event: evt.FileModifiedEvent | evt.DirModifiedEvent) -> None:
-        if not event.is_directory and (
-            p.Path(
+        if not (
+            event.is_directory and p.Path(
                 event.src_path if isinstance(event.src_path, str) else event.src_path.
                 decode('utf-8')
             ) == self.fpath
@@ -49,8 +52,9 @@ class Resource(abc.ABC, t.Generic[T], os.PathLike[str]):
                 data = self._parse()
                 self.backup = self.data  # Backup current data
                 self.data = data
-        # pylint: disable=broad-except
-        except Exception:
+                logging.info("Loaded data from file: %s", self.fpath)
+        except Exception as e:
+            logging.error("Failed to load data from file: %s - %s", self.fpath, e)
             if self.backup is not None:
                 self.data = self.backup
 
@@ -73,6 +77,7 @@ class WatchedResource(Resource[T], abc.ABC):
         handler = FileHandler(self.load, self.fpath)
         self.observer.schedule(handler, str(self.fpath.parent), recursive=False)
         self.observer.start()
+        logger.info("Monitoring file: %s", self.fpath)
 
     def stop(self) -> None:
         if self.observer:

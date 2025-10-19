@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import typing as t
 
 import pydantic as pydt
@@ -8,6 +9,8 @@ import typing_extensions as te
 from personax.exceptions import RESTResourceException
 from personax.resources.rest.weather import WeatherInfo
 from personax.resources.rest.weather import WeatherInfoService
+
+logger = logging.getLogger('personax.resources.rest.weather.amap')
 
 
 class AmapWeatherInfoParams(te.TypedDict):
@@ -89,11 +92,18 @@ class AmapWeatherInfoService(WeatherInfoService):
             retry_wait=self.retry_wait
         )
         if response.status != "1" or response.infocode != "10000":
+            logger.error('Amap Weather API error: %s', response.info)
             raise RESTResourceException(f"Failed to fetch weather data: {response.info}")
         if not response.lives or len(response.lives) == 0:
+            logger.error('No live weather data available in response')
             raise RESTResourceException("No live weather data available")
         live = response.lives[0]
 
+        logger.debug(
+            'Fetched weather data: %s, %s°C, %s, Wind: %s at level %s, Humidity: %s%%, Reported at: %s',
+            live["weather"], live["temperature"], f'{live["winddirection"]}°', live["windpower"],
+            live["humidity"], live["reporttime"]
+        )
         return WeatherInfo(
             address=f'{live["province"]} {live["city"]}',
             condition=live["weather"],

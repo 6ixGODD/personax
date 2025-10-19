@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import typing as t
 
 import httpx
@@ -11,6 +12,8 @@ from personax.exceptions import RESTResourceException
 from personax.resources.rest.ip import IpLocationService
 from personax.resources.rest.ip import Location
 
+
+logger = logging.getLogger('personax.resources.rest.ip.baidu')
 
 class BaiduLocationParams(te.TypedDict):
     ip: str
@@ -104,7 +107,9 @@ class BaiduIpLocationService(IpLocationService):
             retry_wait=self.retry_wait
         )
         if response.status != 0:
+            logger.error(f"Baidu Location IP Service error for IP {ip}: {response.message}")
             raise RESTResourceException(f"Baidu Location IP Service error: {response.message}")
+        logger.debug(f"Baidu Location IP Service response for IP {ip}: {response}")
         return Location(
             address=response.content["address"],
             adcode=response.content["address_detail"]["adcode"]

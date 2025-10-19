@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import typing as t
 
 import jinja2 as j2
@@ -7,6 +8,7 @@ import jinja2 as j2
 from personax.exceptions import ResourceException
 from personax.resources import Resource, WatchedResource
 
+logger = logging.getLogger('personax.resources.template')
 
 # pylint: disable=too-few-public-methods
 @t.runtime_checkable

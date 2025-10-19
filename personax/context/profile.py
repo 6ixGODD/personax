@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 import typing as t
 import zoneinfo
 
@@ -11,6 +12,8 @@ from personax.exceptions import RESTResourceException
 from personax.resources.rest.ip import IpLocationService, Location
 from personax.resources.template import Template
 from personax.types.context import Context
+
+logger = logging.getLogger('personax.context.profile')
 
 
 class ProfileContext(te.TypedDict):
@@ -88,6 +91,12 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
             except RESTResourceException:
                 # If IP location service fails, continue without location
                 location = None
+
+        logger.debug(
+            "Built ProfileContext: prefname=%s, ip=%s, location=%s, timestamp=%s, timezone=%s, user_agent=%s, platform=%s",
+            info.get('prefname'), info.get('ip'), location, timestamp,
+            info.get('timezone', 'UTC') or "UTC", info.get('user_agent'), info.get('platform')
+        )
 
         return ProfileContext(
             prefname=info.get('prefname'),

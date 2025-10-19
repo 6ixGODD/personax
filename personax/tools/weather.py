@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import typing as t
 
 import typing_extensions as te
@@ -8,6 +9,8 @@ from personax.exceptions import RESTResourceException, ToolCallException
 from personax.resources.rest.weather import WeatherInfoService
 from personax.tools import BaseTool
 from personax.tools import Property
+
+logger = logging.getLogger('personax.tools.weather')
 
 
 class Weather(te.TypedDict, total=False):
@@ -47,12 +50,16 @@ class GetWeather(BaseTool[[str], Weather]):
             ),
         ],
     ) -> Weather:
+        logger.debug("Fetching weather info for adcode: %s", adcode)
         try:
             info = await self.weather_srv.fetch(adcode)
         except RESTResourceException as exc:
+            logger.error("Error fetching weather info for adcode %s: %s", adcode, exc)
             raise ToolCallException(
                 f"Failed to get weather info for adcode {adcode}: {exc}"
             ) from exc
+
+        logger.debug("Weather info retrieved: %s", info)
         return Weather(
             location=info["address"],
             temperature=info["temperature"],
