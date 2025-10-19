@@ -33,7 +33,7 @@ class FileHandler(evt.FileSystemEventHandler):
 T = t.TypeVar("T")
 
 
-class Resource(abc.ABC, t.Generic[T], os.PathLike[str]):
+class Resource(abc.ABC, t.Generic[T]):
 
     def __init__(self, fpath: str | p.Path | os.PathLike[str]):
         self.fpath = p.Path(fpath)

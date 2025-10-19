@@ -14,7 +14,7 @@ _Mapping: t.TypeAlias = t.Mapping[str, t.Union[_Primitive, t.Any]]
 BuiltT = t.TypeVar("BuiltT", bound=_Mapping)
 
 
-class ContextSystem(abc.ABC, t.Generic[BuiltT], AsyncContextMixin):
+class ContextSystem(abc.ABC, t.Generic[BuiltT]):
     """Abstract base class for context systems that process and enrich
     conversational context.
 
