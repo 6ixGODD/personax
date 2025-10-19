@@ -101,8 +101,13 @@ class AmapWeatherInfoService(WeatherInfoService):
 
         logger.debug(
             'Fetched weather data: %s, %s°C, %s, Wind: %s at level %s, Humidity: %s%%, Reported at: %s',
-            live["weather"], live["temperature"], f'{live["winddirection"]}°', live["windpower"],
-            live["humidity"], live["reporttime"]
+            f'{live["province"]} {live["city"]}',
+            live["weather"],
+            live["temperature"],
+            f'{live["winddirection"]}°',
+            live["windpower"],
+            live["humidity"],
+            live["reporttime"],
         )
         return WeatherInfo(
             address=f'{live["province"]} {live["city"]}',
