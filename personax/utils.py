@@ -46,8 +46,7 @@ def singleton(cls: type[_C]) -> t.Callable[..., _C]:
     return get_instance
 
 
-# pylint: disable=invalid-name
-class classproperty(property):
+class classproperty(property):  # noqa: N801
     def __get__(self, __instance: t.Any, __owner: type | None = None) -> t.Any:
         if not callable(self.fget):
             raise TypeError("fget must be callable")

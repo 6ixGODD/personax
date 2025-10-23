@@ -8,7 +8,7 @@ import httpx
 import pydantic as pydt
 import typing_extensions as te
 
-from personax.exceptions import RESTResourceException
+from personax.exceptions import RESTResourceError
 from personax.resources.rest.ip import IpLocationService
 from personax.resources.rest.ip import Location
 
@@ -23,7 +23,7 @@ class BaiduLocationParams(te.TypedDict):
     """Baidu API Access Key"""
 
     coor: str
-    """Coordinate type, e.g., 'gcj02' for GCJ-02 coordinates (Mars 
+    """Coordinate type, e.g., 'gcj02' for GCJ-02 coordinates (Mars
     coordinates)"""
 
 
@@ -105,7 +105,7 @@ class BaiduIpLocationService(IpLocationService):
         )
         if response.status != 0:
             logger.error(f"Baidu Location IP Service error for IP {ip}: {response.message}")
-            raise RESTResourceException(f"Baidu Location IP Service error: {response.message}")
+            raise RESTResourceError(f"Baidu Location IP Service error: {response.message}")
         logger.debug(f"Baidu Location IP Service response for IP {ip}: {response}")
         return Location(
             address=response.content["address"], adcode=response.content["address_detail"]["adcode"]

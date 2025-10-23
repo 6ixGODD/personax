@@ -10,15 +10,16 @@ import typing as t
 import pydantic as pydt
 
 # JSON serializable types
-JsonPrimitive = t.Union[str, int, float, bool, None]
-JsonValue = t.Union[JsonPrimitive, t.Mapping[str, t.Any], t.Sequence[t.Any]]
-JsonObject = t.Union[JsonValue, t.Mapping[str, JsonValue]]
+JsonPrimitive = str | int | float | bool | None
+JsonValue = JsonPrimitive | t.Mapping[str, t.Any] | t.Sequence[t.Any]
+JsonObject = JsonValue | t.Mapping[str, JsonValue]
 JsonArray = t.Sequence[JsonValue]
 
 # JSON Schema types
 JsonSchemaType = t.Literal["string", "integer", "number", "boolean", "array", "object"]
 
 
+# ruff: noqa: N815
 class PropertySchema(pydt.BaseModel):
     type: JsonSchemaType
     description: str | None = None

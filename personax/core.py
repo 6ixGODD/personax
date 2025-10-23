@@ -143,6 +143,7 @@ class PersonaX(AsyncContextMixin):
         stream: bool = False,
         max_completion_tokens: int | Unset = UNSET,
         prompt_cache_key: str | Unset = UNSET,
+        extras: dict[str, t.Any] | None = None,
     ) -> Completion | AsyncStream[CompletionChunk]:
         return await self.core.complete(
             messages=messages,
@@ -150,4 +151,5 @@ class PersonaX(AsyncContextMixin):
             stream=stream,
             max_completion_tokens=max_completion_tokens,
             prompt_cache_key=prompt_cache_key,
+            extras=extras,
         )

@@ -6,7 +6,7 @@ import typing as t
 import pydantic as pydt
 import typing_extensions as te
 
-from personax.exceptions import RESTResourceException
+from personax.exceptions import RESTResourceError
 from personax.resources.rest.weather import WeatherInfo
 from personax.resources.rest.weather import WeatherInfoService
 
@@ -92,10 +92,10 @@ class AmapWeatherInfoService(WeatherInfoService):
         )
         if response.status != "1" or response.infocode != "10000":
             logger.error("Amap Weather API error: %s", response.info)
-            raise RESTResourceException(f"Failed to fetch weather data: {response.info}")
+            raise RESTResourceError(f"Failed to fetch weather data: {response.info}")
         if not response.lives or len(response.lives) == 0:
             logger.error("No live weather data available in response")
-            raise RESTResourceException("No live weather data available")
+            raise RESTResourceError("No live weather data available")
         live = response.lives[0]
 
         logger.debug(

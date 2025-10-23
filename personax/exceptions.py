@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-class PersonaXException(Exception):
+class PersonaXError(Exception):
     """Base exception for PersonaX-related errors."""
 
     def __init__(self, msg: str, /):
@@ -15,13 +15,13 @@ class PersonaXException(Exception):
         return f"{self.__class__.__name__}({self.message!r})"
 
 
-class ToolCallException(PersonaXException):
+class ToolCallError(PersonaXError):
     """Exception raised for errors during tool calls."""
 
 
-class ResourceException(PersonaXException):
+class ResourceError(PersonaXError):
     """Exception raised for resource-related errors."""
 
 
-class RESTResourceException(ResourceException):
+class RESTResourceError(ResourceError):
     """Exception raised for REST resource-related errors."""

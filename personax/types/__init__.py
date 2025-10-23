@@ -44,7 +44,7 @@ class BaseSchema:
         return tuple(getattr(self, slot, None) for slot in self.__slots__)
 
     def __setstate__(self, state: tuple[object, ...]) -> None:  # for pickle optimization
-        for slot, value in zip(self.__slots__, state):
+        for slot, value in zip(self.__slots__, state, strict=True):
             setattr(self, slot, value)
 
 

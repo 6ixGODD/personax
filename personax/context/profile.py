@@ -8,7 +8,7 @@ import zoneinfo
 import typing_extensions as te
 
 from personax.context import ContextSystem
-from personax.exceptions import RESTResourceException
+from personax.exceptions import RESTResourceError
 from personax.resources.rest.ip import IpLocationService
 from personax.resources.rest.ip import Location
 from personax.resources.template import Template
@@ -74,7 +74,7 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
 
     async def build(self, context: Context | str) -> ProfileContext:
         # Get basic information
-        info = context.context.get('profile.info', Info())
+        info = context.context.get("profile.info", Info())
         # Get current timestamp in the specified timezone
         try:
             tz = zoneinfo.ZoneInfo(info.get("timezone", "UTC") or "UTC")
@@ -87,7 +87,7 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
         if info.get("ip") and self.ip_service:
             try:
                 location = await self.ip_service.locate(info.get("ip"))
-            except RESTResourceException:
+            except RESTResourceError:
                 # If IP location service fails, continue without location
                 location = None
 

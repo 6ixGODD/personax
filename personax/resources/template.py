@@ -5,7 +5,7 @@ import typing as t
 
 import jinja2 as j2
 
-from personax.exceptions import ResourceException
+from personax.exceptions import ResourceError
 from personax.resources import Resource
 from personax.resources import WatchedResource
 
@@ -26,7 +26,7 @@ class J2Template(Resource[j2.Template], Template):
 
     def render(self, *args: t.Any, **kwargs: t.Any) -> str:
         if self.data is None:
-            raise ResourceException("Template not loaded.")
+            raise ResourceError("Template not loaded.")
         return self.data.render(*args, **kwargs)
 
 
@@ -37,5 +37,5 @@ class WatchedJ2Template(WatchedResource[j2.Template], Template):
 
     def render(self, *args: t.Any, **kwargs: t.Any) -> str:
         if self.data is None:
-            raise ResourceException("Template not loaded.")
+            raise ResourceError("Template not loaded.")
         return self.data.render(*args, **kwargs)

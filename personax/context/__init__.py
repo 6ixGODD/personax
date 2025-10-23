@@ -239,8 +239,7 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]], AsyncContextMixin):
         raw = context.context.copy()
         parsed = {sys.__key__: await sys.parse(raw[sys.__key__]) for sys in self.systems}
         sys_prompt = self.context_template.render(systems=parsed, raw=raw)
-        messages = CompatMessages.from_raws(
+        return CompatMessages.from_raws(
             raws=Messages.model_construct(messages=context.messages),
             sys_prompt=sys_prompt,
         )
-        return messages

@@ -11,7 +11,7 @@ import openai.types.chat as chat_t
 import openai.types.chat.chat_completion_message_function_tool_call_param as fn_param
 
 from personax.completion import CompletionSystem
-from personax.exceptions import ToolCallException
+from personax.exceptions import ToolCallError
 from personax.tools import BaseToolType
 from personax.types import BaseModel
 from personax.types.compat.message import Message
@@ -256,7 +256,7 @@ class OpenAICompletion(CompletionSystem):
                             result = tools_map[func_name](**args)
                             if isinstance(result, t.Awaitable):
                                 result = await result
-                        except ToolCallException as e:
+                        except ToolCallError as e:
                             logger.error("Error executing tool %s: %s", func_name, str(e))
                             result = f"Error executing tool {func_name}"
                         exec_time = time.time() - start_time
@@ -524,7 +524,7 @@ class OpenAICompletion(CompletionSystem):
                                 result = tools_map[func_name](**args)
                                 if isinstance(result, t.Awaitable):
                                     result = await result
-                            except ToolCallException as e:
+                            except ToolCallError as e:
                                 logger.error("Error executing tool %s: %s", func_name, str(e))
                                 result = f"Error executing tool {func_name}"
                             exec_time = time.time() - start_time

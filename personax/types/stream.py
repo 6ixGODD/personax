@@ -27,10 +27,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
         self._is_consumed = True
         try:
             async for raw_item in self._source:
-                if self._mapper:
-                    item = self._mapper(raw_item)
-                else:
-                    item = t.cast(_T, raw_item)
+                item = self._mapper(raw_item) if self._mapper else t.cast(_T, raw_item)
 
                 self._items.append(item)
                 yield item
