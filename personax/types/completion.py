@@ -11,7 +11,7 @@ class CompletionMessage(BaseSchema):
     content: str | None
     refusal: str | None
 
-    __slots__ = ("reason", "content", "refusal")
+    __slots__ = ("content", "reason", "refusal")
 
     def __init__(
         self,
@@ -33,7 +33,7 @@ class Completion(BaseSchema):
     model: str
     usage: Usage | None
 
-    __slots__ = ("id", "message", "finish_reason", "created", "model", "usage")
+    __slots__ = ("created", "finish_reason", "id", "message", "model", "usage")
 
     def __init__(
         self,

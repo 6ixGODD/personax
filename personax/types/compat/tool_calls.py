@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import typing as t
-
 from personax.types import BaseSchema
 
 
@@ -9,7 +7,7 @@ class Function(BaseSchema):
     name: str
     arguments: str
 
-    __slots__ = ("name", "arguments")
+    __slots__ = ("arguments", "name")
 
     def __init__(
         self,
@@ -39,7 +37,7 @@ class ToolCallsParams(BaseSchema):
 
 class ToolCalls(BaseSchema):
     call_id: str
-    content: str | t.List[str]
+    content: str | list[str]
 
     __slots__ = ("call_id", "content")
 
@@ -47,7 +45,7 @@ class ToolCalls(BaseSchema):
         self,
         *,
         call_id: str,
-        content: str | t.List[str],
+        content: str | list[str],
     ) -> None:
         self.call_id = call_id
         self.content = content

@@ -6,22 +6,22 @@ import typing as t
 import jinja2 as j2
 
 from personax.exceptions import ResourceException
-from personax.resources import Resource, WatchedResource
+from personax.resources import Resource
+from personax.resources import WatchedResource
 
-logger = logging.getLogger('personax.resources.template')
+logger = logging.getLogger("personax.resources.template")
+
 
 # pylint: disable=too-few-public-methods
 @t.runtime_checkable
 class Template(t.Protocol):
-
     def render(self, *args: t.Any, **kwargs: t.Any) -> str:
         pass
 
 
 class J2Template(Resource[j2.Template], Template):
-
     def _parse(self) -> j2.Template:
-        content = self.fpath.read_text(encoding='utf-8').strip()
+        content = self.fpath.read_text(encoding="utf-8").strip()
         return j2.Template(content)
 
     def render(self, *args: t.Any, **kwargs: t.Any) -> str:
@@ -31,9 +31,8 @@ class J2Template(Resource[j2.Template], Template):
 
 
 class WatchedJ2Template(WatchedResource[j2.Template], Template):
-
     def _parse(self) -> j2.Template:
-        content = self.fpath.read_text(encoding='utf-8').strip()
+        content = self.fpath.read_text(encoding="utf-8").strip()
         return j2.Template(content)
 
     def render(self, *args: t.Any, **kwargs: t.Any) -> str:

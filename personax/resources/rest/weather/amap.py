@@ -10,7 +10,7 @@ from personax.exceptions import RESTResourceException
 from personax.resources.rest.weather import WeatherInfo
 from personax.resources.rest.weather import WeatherInfoService
 
-logger = logging.getLogger('personax.resources.rest.weather.amap')
+logger = logging.getLogger("personax.resources.rest.weather.amap")
 
 
 class AmapWeatherInfoParams(te.TypedDict):
@@ -65,14 +65,13 @@ class AmapWeatherInfo(pydt.BaseModel):
 
     infocode: str | None = pydt.Field(None, description='Response code, "10000" indicates success')
 
-    lives: t.List[AmapWeatherInfoLives] = pydt.Field(
+    lives: list[AmapWeatherInfoLives] = pydt.Field(
         default_factory=list,
         description="List of live weather information",
     )
 
 
 class AmapWeatherInfoService(WeatherInfoService):
-
     def __init__(
         self, key: str, *, timeout: float = 5.0, max_retries: int = 3, retry_wait: float = 2.0
     ):
@@ -89,32 +88,32 @@ class AmapWeatherInfoService(WeatherInfoService):
             params=params,
             cast_to=AmapWeatherInfo,
             max_retries=self.max_retries,
-            retry_wait=self.retry_wait
+            retry_wait=self.retry_wait,
         )
         if response.status != "1" or response.infocode != "10000":
-            logger.error('Amap Weather API error: %s', response.info)
+            logger.error("Amap Weather API error: %s", response.info)
             raise RESTResourceException(f"Failed to fetch weather data: {response.info}")
         if not response.lives or len(response.lives) == 0:
-            logger.error('No live weather data available in response')
+            logger.error("No live weather data available in response")
             raise RESTResourceException("No live weather data available")
         live = response.lives[0]
 
         logger.debug(
-            'Fetched weather data: %s, %s°C, %s, Wind: %s at level %s, Humidity: %s%%, Reported at: %s',
-            f'{live["province"]} {live["city"]}',
+            "Fetched weather data: %s, %s°C, %s, Wind: %s at level %s, Humidity: %s%%, Reported at: %s",
+            f"{live['province']} {live['city']}",
             live["weather"],
             live["temperature"],
-            f'{live["winddirection"]}°',
+            f"{live['winddirection']}°",
             live["windpower"],
             live["humidity"],
             live["reporttime"],
         )
         return WeatherInfo(
-            address=f'{live["province"]} {live["city"]}',
+            address=f"{live['province']} {live['city']}",
             condition=live["weather"],
             temperature=live["temperature"],
             winddirection=live["winddirection"],
             windpower=live["windpower"],
             humidity=live["humidity"],
-            reporttime=live["reporttime"]
+            reporttime=live["reporttime"],
         )

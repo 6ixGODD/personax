@@ -3,17 +3,17 @@ from __future__ import annotations
 import logging
 import typing as t
 
+import async_lru as alru
 import httpx
 import pydantic as pydt
 import typing_extensions as te
-import async_lru as alru
 
 from personax.exceptions import RESTResourceException
 from personax.resources.rest.ip import IpLocationService
 from personax.resources.rest.ip import Location
 
+logger = logging.getLogger("personax.resources.rest.ip.baidu")
 
-logger = logging.getLogger('personax.resources.rest.ip.baidu')
 
 class BaiduLocationParams(te.TypedDict):
     ip: str
@@ -76,7 +76,6 @@ class BaiduLocation(pydt.BaseModel):
 
 
 class BaiduIpLocationService(IpLocationService):
-
     def __init__(
         self,
         ak: str,
@@ -84,13 +83,11 @@ class BaiduIpLocationService(IpLocationService):
         timeout: float = 10.0,
         max_retries: int = 3,
         retry_wait: float = 2.0,
-        http_client: httpx.AsyncClient | None = None
+        http_client: httpx.AsyncClient | None = None,
     ):
         self.ak = ak
         super().__init__(
-            base_url="https://api.map.baidu.com/location/",
-            timeout=timeout,
-            http_client=http_client
+            base_url="https://api.map.baidu.com/location/", timeout=timeout, http_client=http_client
         )
         self.max_retries = max_retries
         self.retry_wait = retry_wait
@@ -104,13 +101,12 @@ class BaiduIpLocationService(IpLocationService):
             params=params,
             max_retries=self.max_retries,
             cast_to=BaiduLocation,
-            retry_wait=self.retry_wait
+            retry_wait=self.retry_wait,
         )
         if response.status != 0:
             logger.error(f"Baidu Location IP Service error for IP {ip}: {response.message}")
             raise RESTResourceException(f"Baidu Location IP Service error: {response.message}")
         logger.debug(f"Baidu Location IP Service response for IP {ip}: {response}")
         return Location(
-            address=response.content["address"],
-            adcode=response.content["address_detail"]["adcode"]
+            address=response.content["address"], adcode=response.content["address_detail"]["adcode"]
         )

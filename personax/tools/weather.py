@@ -5,12 +5,13 @@ import typing as t
 
 import typing_extensions as te
 
-from personax.exceptions import RESTResourceException, ToolCallException
+from personax.exceptions import RESTResourceException
+from personax.exceptions import ToolCallException
 from personax.resources.rest.weather import WeatherInfoService
 from personax.tools import BaseTool
 from personax.tools import Property
 
-logger = logging.getLogger('personax.tools.weather')
+logger = logging.getLogger("personax.tools.weather")
 
 
 class Weather(te.TypedDict, total=False):
@@ -32,8 +33,7 @@ class Weather(te.TypedDict, total=False):
 
 class GetWeather(BaseTool[[str], Weather]):
     __function_description__ = (
-        "Get the current weather information for a "
-        "given location by its administrative code."
+        "Get the current weather information for a given location by its administrative code."
     )
 
     def __init__(self, weather_srv: WeatherInfoService):
@@ -44,9 +44,8 @@ class GetWeather(BaseTool[[str], Weather]):
         adcode: t.Annotated[
             str,
             Property(
-                description="The administrative code of the location to get "
-                "the weather for.",
-                example="110000"
+                description="The administrative code of the location to get the weather for.",
+                example="110000",
             ),
         ],
     ) -> Weather:
@@ -65,5 +64,5 @@ class GetWeather(BaseTool[[str], Weather]):
             temperature=info["temperature"],
             condition=info.get("condition", ""),
             humidity=info.get("humidity", ""),
-            windpower=info.get("windpower", "")
+            windpower=info.get("windpower", ""),
         )

@@ -31,7 +31,6 @@ class WeatherInfo(te.TypedDict, total=False):
 
 
 class WeatherInfoService(RESTResource):
-
     @abc.abstractmethod
     async def fetch(self, adcode: str, /) -> WeatherInfo:
         pass

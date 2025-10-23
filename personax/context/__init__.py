@@ -9,8 +9,8 @@ from personax.types.context import Context
 from personax.types.message import Messages
 from personax.utils import AsyncContextMixin
 
-_Primitive: t.TypeAlias = t.Union[str, int, float, bool, None]
-_Mapping: t.TypeAlias = t.Mapping[str, t.Union[_Primitive, t.Any]]
+_Primitive: t.TypeAlias = str | int | float | bool | None
+_Mapping: t.TypeAlias = t.Mapping[str, _Primitive | t.Any]
 BuiltT = t.TypeVar("BuiltT", bound=_Mapping)
 
 
@@ -30,6 +30,7 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
         BuiltT: The type of structured data this system produces (must be a
             mapping)
     """
+
     __key__: t.ClassVar[str]  # Unique key identifying this context system
 
     async def preprocess(self, context: Context) -> Context:
@@ -159,15 +160,14 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]], AsyncContextMixin):
     """
 
     @t.overload
-    def __getitem__(self, index: int) -> ContextSystem[t.Any]:
-        ...
+    def __getitem__(self, index: int) -> ContextSystem[t.Any]: ...
 
     @t.overload
-    def __getitem__(self, index: slice) -> t.Sequence[ContextSystem[t.Any]]:
-        ...
+    def __getitem__(self, index: slice) -> t.Sequence[ContextSystem[t.Any]]: ...
 
-    def __getitem__(self,
-                    index: int | slice) -> ContextSystem[t.Any] | t.Sequence[ContextSystem[t.Any]]:
+    def __getitem__(
+        self, index: int | slice
+    ) -> ContextSystem[t.Any] | t.Sequence[ContextSystem[t.Any]]:
         return self.systems[index]
 
     def __len__(self) -> int:

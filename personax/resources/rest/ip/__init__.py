@@ -16,7 +16,6 @@ class Location(te.TypedDict):
 
 
 class IpLocationService(RESTResource):
-
     @abc.abstractmethod
     async def locate(self, ip: str, /) -> Location:
         pass

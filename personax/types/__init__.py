@@ -23,7 +23,7 @@ class BaseSchema:
     def from_dict(cls, data: dict[str, object]) -> t.Self:
         obj = cls.__new__(cls)  # 不调用 __init__
         for slot in cls.__slots__:
-            value = data.get(slot, None)
+            value = data.get(slot)
             setattr(obj, slot, value)
         return obj
 

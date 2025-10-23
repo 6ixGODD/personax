@@ -9,10 +9,10 @@ from personax.types.completion import Completion
 from personax.types.completion_chunk import CompletionChunk
 from personax.types.message import Messages
 from personax.types.stream import AsyncStream
-from personax.utils import AsyncContextMixin
-from personax.utils import classproperty
 from personax.utils import UNSET
+from personax.utils import AsyncContextMixin
 from personax.utils import Unset
+from personax.utils import classproperty
 
 
 def build_id(
@@ -31,13 +31,14 @@ def build_id(
         A formatted ID string in the format: name[-version][@scenario]
     """
     return (
-        f"{name}" + (f"-{version}" if version != "latest" else "") +
-        (f"@{scenario}" if scenario != "default" else "")
+        f"{name}"
+        + (f"-{version}" if version != "latest" else "")
+        + (f"@{scenario}" if scenario != "default" else "")
     )
 
 
 class Core(AsyncContextMixin):
-    __slots__ = ("context", "toolset", "completion", "model_id")
+    __slots__ = ("completion", "context", "model_id", "toolset")
 
     def __init__(
         self,
@@ -78,7 +79,7 @@ class Core(AsyncContextMixin):
             max_completion_tokens=max_completion_tokens,
             prompt_cache_key=prompt_cache_key,
             tools=toolset,
-            model=self.model_id
+            model=self.model_id,
         )
 
 
@@ -104,8 +105,8 @@ class PersonaX(AsyncContextMixin):
 
     def __repr__(self) -> str:
         return (
-            f"{self.__class__.__name__}(name=\"{self.name}\", version=\"{self.version}\","
-            f"scenario=\"{self.scenario}\")"
+            f'{self.__class__.__name__}(name="{self.name}", version="{self.version}",'
+            f'scenario="{self.scenario}")'
         )
 
     def __hash__(self) -> int:
@@ -134,5 +135,5 @@ class PersonaX(AsyncContextMixin):
             chatcmpl_id=chatcmpl_id,
             stream=stream,
             max_completion_tokens=max_completion_tokens,
-            prompt_cache_key=prompt_cache_key
+            prompt_cache_key=prompt_cache_key,
         )

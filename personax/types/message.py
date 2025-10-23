@@ -9,12 +9,12 @@ from personax.types import BaseSchema
 
 
 class Message(BaseSchema):
-    __slots__ = ("role", "content", "image")
+    __slots__ = ("content", "image", "role")
 
     def __init__(
         self,
         *,
-        role: t.Literal['system', 'user', 'assistant'],
+        role: t.Literal["system", "user", "assistant"],
         content: str | None,
         image: bytes | None = None,
     ) -> None:
@@ -31,8 +31,8 @@ class Messages(BaseModel):
         self,
         *,
         allow_system: bool = False,
-        first_role: t.Literal['system', 'user', 'assistant'] = "user",
-        last_role: t.Literal['system', 'user', 'assistant'] = "user",
+        first_role: t.Literal["system", "user", "assistant"] = "user",
+        last_role: t.Literal["system", "user", "assistant"] = "user",
     ) -> None:
         messages = list(self.messages)
         iterator = iter(messages)
@@ -53,9 +53,8 @@ class Messages(BaseModel):
         prev = first
         last = first
         for curr in iterator:
-            if (
-                curr.role not in ("user", "assistant")
-                and not (allow_system and curr.role == "system")
+            if curr.role not in ("user", "assistant") and not (
+                allow_system and curr.role == "system"
             ):
                 raise ValueError(f"Invalid role: {curr.role!r}")
             if prev.role == curr.role:

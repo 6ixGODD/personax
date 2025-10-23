@@ -25,15 +25,15 @@ from personax.types.completion_chunk import CompletionChunk
 from personax.types.completion_chunk import CompletionChunkDelta
 from personax.types.stream import AsyncStream
 from personax.types.usage import Usage
-from personax.utils import filter_kwargs
 from personax.utils import UNSET
 from personax.utils import Unset
+from personax.utils import filter_kwargs
 
 logger = logging.getLogger("persomna.completion.openai")
 
 
 def map_finish_reason(
-    reason: t.Literal["stop", "length", "tool_calls", "content_filter", "function_call"] | None
+    reason: t.Literal["stop", "length", "tool_calls", "content_filter", "function_call"] | None,
 ) -> t.Literal["stop", "length", "content_filter"]:
     if reason and reason in ("stop", "length", "content_filter"):
         return t.cast(t.Literal["stop", "length", "content_filter"], reason)
@@ -53,7 +53,6 @@ class OpenAIConfig(BaseModel):
 
 
 class OpenAICompletion(CompletionSystem):
-
     def __init__(
         self,
         *,
@@ -67,8 +66,9 @@ class OpenAICompletion(CompletionSystem):
         super().__init__()
         self.model = openai_config.model
         logger.debug(
-            "Initializing OpenAICompletion with model=%s, base_url=%s", self.model,
-            openai_config.base_url
+            "Initializing OpenAICompletion with model=%s, base_url=%s",
+            self.model,
+            openai_config.base_url,
         )
 
         self.client = openai.AsyncOpenAI(
@@ -79,21 +79,22 @@ class OpenAICompletion(CompletionSystem):
             timeout=openai_config.timeout,
             max_retries=openai_config.max_retries,
             default_headers=openai_config.default_headers,
-            default_query=openai_config.default_query
+            default_query=openai_config.default_query,
         )
         self.temperature = openai.omit if isinstance(temperature, Unset) else temperature
-        self.presence_penalty = openai.omit if isinstance(
-            presence_penalty, Unset
-        ) else presence_penalty
-        self.frequency_penalty = openai.omit if isinstance(
-            frequency_penalty, Unset
-        ) else frequency_penalty
+        self.presence_penalty = (
+            openai.omit if isinstance(presence_penalty, Unset) else presence_penalty
+        )
+        self.frequency_penalty = (
+            openai.omit if isinstance(frequency_penalty, Unset) else frequency_penalty
+        )
         self.verbosity = openai.omit if isinstance(verbosity, Unset) else verbosity
         self.top_p = openai.omit if isinstance(top_p, Unset) else top_p
 
         logger.debug(
-            "OpenAI client initialized with timeout=%s, max_retries=%s", openai_config.timeout,
-            openai_config.max_retries
+            "OpenAI client initialized with timeout=%s, max_retries=%s",
+            openai_config.timeout,
+            openai_config.max_retries,
         )
 
     async def complete(
@@ -106,14 +107,17 @@ class OpenAICompletion(CompletionSystem):
         max_completion_tokens: int | Unset = UNSET,
         model: str,
         prompt_cache_key: str | Unset = UNSET,
-        **kwargs: t.Any
+        **kwargs: t.Any,
     ) -> Completion | AsyncStream[CompletionChunk]:
         msg_count = len(list(messages))
         tool_names = [tool.__function_name__ for tool in tools]
 
         logger.debug(
-            "Starting completion: stream=%s, model=%s, messages_count=%s, tools=%s", stream, model,
-            msg_count, tool_names
+            "Starting completion: stream=%s, model=%s, messages_count=%s, tools=%s",
+            stream,
+            model,
+            msg_count,
+            tool_names,
         )
 
         if stream:
@@ -125,7 +129,7 @@ class OpenAICompletion(CompletionSystem):
                 max_completion_tokens=max_completion_tokens,
                 model=model,
                 prompt_cache_key=prompt_cache_key,
-                **kwargs
+                **kwargs,
             )
         logger.debug("Routing to sync completion")
         return await self._sync_complete(
@@ -135,7 +139,7 @@ class OpenAICompletion(CompletionSystem):
             max_completion_tokens=max_completion_tokens,
             model=model,
             prompt_cache_key=prompt_cache_key,
-            **kwargs
+            **kwargs,
         )
 
     async def _sync_complete(
@@ -147,7 +151,7 @@ class OpenAICompletion(CompletionSystem):
         max_completion_tokens: int | Unset = UNSET,
         model: str,
         prompt_cache_key: str | Unset = UNSET,
-        **kwargs: t.Any
+        **kwargs: t.Any,
     ) -> Completion:
         msgs = list(messages)  # type: t.List[Message | ToolCalls | ToolCallsParams]
         tools_map = {tool.__function_name__: tool for tool in tools}
@@ -163,10 +167,9 @@ class OpenAICompletion(CompletionSystem):
             created = int(time.time())
             message_list = self._build_msgs(msgs)
             tool_list = (
-                [
-                    t.cast(chat_t.ChatCompletionFunctionToolParam, tool.schema_dict)
-                    for tool in tools
-                ] if tools else openai.omit
+                [t.cast(chat_t.ChatCompletionFunctionToolParam, tool.schema_dict) for tool in tools]
+                if tools
+                else openai.omit
             )
 
             logger.debug("Built %s OpenAI messages", len(message_list))
@@ -176,8 +179,11 @@ class OpenAICompletion(CompletionSystem):
             # Log message structure for debugging
             for i, msg in enumerate(message_list):
                 logger.debug(
-                    "Message %s: role=%s, has_content=%s, has_tool_calls=%s", i, msg.get('role'),
-                    'content' in msg, 'tool_calls' in msg
+                    "Message %s: role=%s, has_content=%s, has_tool_calls=%s",
+                    i,
+                    msg.get("role"),
+                    "content" in msg,
+                    "tool_calls" in msg,
                 )
 
             completion = await self.client.chat.completions.create(
@@ -186,24 +192,27 @@ class OpenAICompletion(CompletionSystem):
                 stream=False,
                 tools=tool_list,
                 max_completion_tokens=openai.omit
-                if isinstance(max_completion_tokens, Unset) else max_completion_tokens,
+                if isinstance(max_completion_tokens, Unset)
+                else max_completion_tokens,
                 temperature=self.temperature,
                 presence_penalty=self.presence_penalty,
                 frequency_penalty=self.frequency_penalty,
                 verbosity=self.verbosity,
                 prompt_cache_key=openai.omit
-                if isinstance(prompt_cache_key, Unset) else prompt_cache_key,
+                if isinstance(prompt_cache_key, Unset)
+                else prompt_cache_key,
                 parallel_tool_calls=True if tools else openai.omit,
                 top_p=self.top_p,
-                **filter_kwargs(chat_rc.AsyncCompletions.create, kwargs)
+                **filter_kwargs(chat_rc.AsyncCompletions.create, kwargs),
             )  # type: chat_t.ChatCompletion
 
             choice = completion.choices[0]
 
             logger.debug(
                 "OpenAI response: finish_reason=%s, content_length=%s, tool_calls_count=%s",
-                choice.finish_reason, len(choice.message.content or ''),
-                len(choice.message.tool_calls or [])
+                choice.finish_reason,
+                len(choice.message.content or ""),
+                len(choice.message.tool_calls or []),
             )
 
             # Add assistant message to history
@@ -225,12 +234,14 @@ class OpenAICompletion(CompletionSystem):
                     call_id = tool_call.id
 
                     logger.debug(
-                        "Tool call %s: %s(%s...)", i + 1, func_name,
-                        tool_call.function.arguments[:100]
+                        "Tool call %s: %s(%s...)",
+                        i + 1,
+                        func_name,
+                        tool_call.function.arguments[:100],
                     )
                     tool_params = ToolCallsParams(
                         call_id=call_id,
-                        function=Function(name=func_name, arguments=tool_call.function.arguments)
+                        function=Function(name=func_name, arguments=tool_call.function.arguments),
                     )
                     msgs.append(tool_params)
                     logger.debug("Added tool call params to history: %s", call_id)
@@ -252,8 +263,7 @@ class OpenAICompletion(CompletionSystem):
 
                         logger.debug("Tool %s executed in %.3fs", func_name, exec_time)
                         logger.debug(
-                            "Tool result type: %s, preview: %s", type(result),
-                            str(result)[:200]
+                            "Tool result type: %s, preview: %s", type(result), str(result)[:200]
                         )
 
                         # Add tool result
@@ -288,11 +298,13 @@ class OpenAICompletion(CompletionSystem):
                 usage_info = Usage(
                     completion_tokens=completion.usage.completion_tokens,
                     prompt_tokens=completion.usage.prompt_tokens,
-                    total_tokens=completion.usage.total_tokens
+                    total_tokens=completion.usage.total_tokens,
                 )
                 logger.debug(
-                    "Usage: %s + %s = %s tokens", usage_info.prompt_tokens,
-                    usage_info.completion_tokens, usage_info.total_tokens
+                    "Usage: %s + %s = %s tokens",
+                    usage_info.prompt_tokens,
+                    usage_info.completion_tokens,
+                    usage_info.total_tokens,
                 )
 
             final_completion = Completion(
@@ -303,7 +315,7 @@ class OpenAICompletion(CompletionSystem):
                 finish_reason=map_finish_reason(choice.finish_reason),
                 created=created,
                 model=model,
-                usage=usage_info
+                usage=usage_info,
             )
 
             logger.debug("Sync completion finished after %s iterations", iteration)
@@ -319,7 +331,7 @@ class OpenAICompletion(CompletionSystem):
         max_completion_tokens: int | Unset = UNSET,
         model: str,
         prompt_cache_key: str | Unset = UNSET,
-        **kwargs: t.Any
+        **kwargs: t.Any,
     ) -> AsyncStream[CompletionChunk]:
         msg_list = list(messages)  # type: t.List[Message | ToolCalls | ToolCallsParams]
         tools_map = {tool.__function_name__: tool for tool in tools}
@@ -341,7 +353,9 @@ class OpenAICompletion(CompletionSystem):
                     [
                         t.cast(chat_t.ChatCompletionFunctionToolParam, tool.schema_dict)
                         for tool in tools
-                    ] if tools else openai.omit
+                    ]
+                    if tools
+                    else openai.omit
                 )
                 logger.debug("Built %s OpenAI messages for streaming", len(message_list))
 
@@ -351,13 +365,15 @@ class OpenAICompletion(CompletionSystem):
                     stream=True,
                     tools=tool_list,
                     max_completion_tokens=openai.omit
-                    if isinstance(max_completion_tokens, Unset) else max_completion_tokens,
+                    if isinstance(max_completion_tokens, Unset)
+                    else max_completion_tokens,
                     temperature=self.temperature,
                     presence_penalty=self.presence_penalty,
                     frequency_penalty=self.frequency_penalty,
                     verbosity=self.verbosity,
                     prompt_cache_key=openai.omit
-                    if isinstance(prompt_cache_key, Unset) else prompt_cache_key,
+                    if isinstance(prompt_cache_key, Unset)
+                    else prompt_cache_key,
                     parallel_tool_calls=True if tools else openai.omit,
                     top_p=self.top_p,
                     **filter_kwargs(chat_rc.AsyncCompletions.create, kwargs),
@@ -380,16 +396,19 @@ class OpenAICompletion(CompletionSystem):
                     delta = choice.delta
                     logger.debug(
                         "Chunk %s: has_content=%s, has_tool_calls=%s, finish_reason=%s",
-                        chunk_count, bool(delta.content), bool(delta.tool_calls),
-                        choice.finish_reason
+                        chunk_count,
+                        bool(delta.content),
+                        bool(delta.tool_calls),
+                        choice.finish_reason,
                     )
 
                     # Handle content
                     if delta.content:
                         content_buffer += delta.content
                         logger.debug(
-                            "Content chunk: '%s' (total: %s chars)", delta.content,
-                            len(content_buffer)
+                            "Content chunk: '%s' (total: %s chars)",
+                            delta.content,
+                            len(content_buffer),
                         )
 
                         yield CompletionChunk(
@@ -397,15 +416,18 @@ class OpenAICompletion(CompletionSystem):
                             delta=CompletionChunkDelta(content=delta.content),
                             finish_reason=(
                                 map_finish_reason(choice.finish_reason)
-                                if choice.finish_reason else None
+                                if choice.finish_reason
+                                else None
                             ),
                             created=created,
                             model=model,
                             usage=Usage(
                                 completion_tokens=chunk.usage.completion_tokens,
                                 prompt_tokens=chunk.usage.prompt_tokens,
-                                total_tokens=chunk.usage.total_tokens
-                            ) if chunk.usage else None,
+                                total_tokens=chunk.usage.total_tokens,
+                            )
+                            if chunk.usage
+                            else None,
                         )
 
                     # Handle tool calls
@@ -418,28 +440,29 @@ class OpenAICompletion(CompletionSystem):
                             func = tool_call.function
 
                             logger.debug(
-                                "Tool call delta %s: id=%s, name=%s, args_chunk='%s'", idx,
-                                tool_call.id, func.name if func else None,
-                                func.arguments if func else None
+                                "Tool call delta %s: id=%s, name=%s, args_chunk='%s'",
+                                idx,
+                                tool_call.id,
+                                func.name if func else None,
+                                func.arguments if func else None,
                             )
 
                             if idx not in tool_calls_buffer:
                                 tool_calls_buffer[idx] = {
                                     "id": tool_call.id or "",
-                                    "function": {
-                                        "name": "",
-                                        "arguments": ""
-                                    }
+                                    "function": {"name": "", "arguments": ""},
                                 }
                                 logger.debug("Created new tool call buffer for index %s", idx)
 
                             if tool_call.function:
                                 if tool_call.function.name:
-                                    tool_calls_buffer[idx]["function"][
-                                        "name"] += tool_call.function.name  # type: ignore
+                                    tool_calls_buffer[idx]["function"]["name"] += (
+                                        tool_call.function.name
+                                    )  # type: ignore
                                 if tool_call.function.arguments:
-                                    tool_calls_buffer[idx]["function"][
-                                        "arguments"] += tool_call.function.arguments  # type: ignore
+                                    tool_calls_buffer[idx]["function"]["arguments"] += (
+                                        tool_call.function.arguments
+                                    )  # type: ignore
 
                     # Handle finish
                     if choice.finish_reason:
@@ -454,8 +477,10 @@ class OpenAICompletion(CompletionSystem):
                             usage=Usage(
                                 completion_tokens=chunk.usage.completion_tokens,
                                 prompt_tokens=chunk.usage.prompt_tokens,
-                                total_tokens=chunk.usage.total_tokens
-                            ) if chunk.usage else None,
+                                total_tokens=chunk.usage.total_tokens,
+                            )
+                            if chunk.usage
+                            else None,
                         )
                         break
 
@@ -539,8 +564,8 @@ class OpenAICompletion(CompletionSystem):
 
     @staticmethod
     def _build_msgs(
-        messages: t.List[Message | ToolCalls | ToolCallsParams]
-    ) -> t.List[chat_t.ChatCompletionMessageParam]:
+        messages: list[Message | ToolCalls | ToolCallsParams],
+    ) -> list[chat_t.ChatCompletionMessageParam]:
         """Build OpenAI message list from Message objects."""
         logger.debug("Building OpenAI messages from %s input messages", len(messages))
 
@@ -578,10 +603,12 @@ class OpenAICompletion(CompletionSystem):
                     msgs[-1]["tool_calls"].append(  # type: ignore
                         chat_t.ChatCompletionMessageFunctionToolCallParam(
                             id=msg.call_id,
-                            function=fn_param.Function(name=msg.function.name,
-                                                       arguments=msg.function.arguments),
+                            function=fn_param.Function(
+                                name=msg.function.name, arguments=msg.function.arguments
+                            ),
                             type="function",
-                        ))
+                        )
+                    )
                     logger.debug(
                         "Added tool call to existing assistant message: %s", msg.function.name
                     )
@@ -620,8 +647,10 @@ class OpenAICompletion(CompletionSystem):
 
     @staticmethod
     async def _parse_stream(
-        completion: t.AsyncIterable[chat_t.ChatCompletionChunk], chatcmpl_id: str, created: int,
-        model: str
+        completion: t.AsyncIterable[chat_t.ChatCompletionChunk],
+        chatcmpl_id: str,
+        created: int,
+        model: str,
     ) -> AsyncStream[CompletionChunk]:
         logger.debug("Parsing stream with chatcmpl_id=%s, model=%s", chatcmpl_id, model)
 
@@ -636,8 +665,10 @@ class OpenAICompletion(CompletionSystem):
 
                 delta = choice.delta
                 logger.debug(
-                    "Stream chunk %s: content=%s, finish_reason=%s", chunk_count,
-                    bool(delta.content), choice.finish_reason
+                    "Stream chunk %s: content=%s, finish_reason=%s",
+                    chunk_count,
+                    bool(delta.content),
+                    choice.finish_reason,
                 )
 
                 yield CompletionChunk(
@@ -654,7 +685,9 @@ class OpenAICompletion(CompletionSystem):
                         completion_tokens=chunk.usage.completion_tokens,
                         prompt_tokens=chunk.usage.prompt_tokens,
                         total_tokens=chunk.usage.total_tokens,
-                    ) if chunk.usage else None
+                    )
+                    if chunk.usage
+                    else None,
                 )
             logger.debug("Stream parsing completed after %s chunks", chunk_count)
 

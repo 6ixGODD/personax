@@ -17,14 +17,11 @@ class PersonaXException(Exception):
 
 class ToolCallException(PersonaXException):
     """Exception raised for errors during tool calls."""
-    pass
 
 
 class ResourceException(PersonaXException):
     """Exception raised for resource-related errors."""
-    pass
 
 
 class RESTResourceException(ResourceException):
     """Exception raised for REST resource-related errors."""
-    pass

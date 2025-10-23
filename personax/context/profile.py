@@ -9,11 +9,12 @@ import typing_extensions as te
 
 from personax.context import ContextSystem
 from personax.exceptions import RESTResourceException
-from personax.resources.rest.ip import IpLocationService, Location
+from personax.resources.rest.ip import IpLocationService
+from personax.resources.rest.ip import Location
 from personax.resources.template import Template
 from personax.types.context import Context
 
-logger = logging.getLogger('personax.context.profile')
+logger = logging.getLogger("personax.context.profile")
 
 
 class ProfileContext(te.TypedDict):
@@ -78,34 +79,39 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
         info = self.provide_info()
         # Get current timestamp in the specified timezone
         try:
-            tz = zoneinfo.ZoneInfo(info.get('timezone', 'UTC') or "UTC")
+            tz = zoneinfo.ZoneInfo(info.get("timezone", "UTC") or "UTC")
         except Exception:
             tz = zoneinfo.ZoneInfo("UTC")
         timestamp = datetime.datetime.now(tz).isoformat()
 
         # Get location from IP if available
         location = None  # type: Location | None
-        if info.get('ip') and self.ip_service:
+        if info.get("ip") and self.ip_service:
             try:
-                location = await self.ip_service.locate(info.get('ip'))
+                location = await self.ip_service.locate(info.get("ip"))
             except RESTResourceException:
                 # If IP location service fails, continue without location
                 location = None
 
         logger.debug(
             "Built ProfileContext: prefname=%s, ip=%s, location=%s, timestamp=%s, timezone=%s, user_agent=%s, platform=%s",
-            info.get('prefname'), info.get('ip'), location, timestamp,
-            info.get('timezone', 'UTC') or "UTC", info.get('user_agent'), info.get('platform')
+            info.get("prefname"),
+            info.get("ip"),
+            location,
+            timestamp,
+            info.get("timezone", "UTC") or "UTC",
+            info.get("user_agent"),
+            info.get("platform"),
         )
 
         return ProfileContext(
-            prefname=info.get('prefname'),
-            ip=info.get('ip'),
+            prefname=info.get("prefname"),
+            ip=info.get("ip"),
             location=location,
             timestamp=timestamp,
-            timezone=info.get('timezone', 'UTC') or "UTC",
-            user_agent=info.get('user_agent'),
-            platform=info.get('platform')
+            timezone=info.get("timezone", "UTC") or "UTC",
+            user_agent=info.get("user_agent"),
+            platform=info.get("platform"),
         )
 
     async def parse(self, built: ProfileContext) -> str:

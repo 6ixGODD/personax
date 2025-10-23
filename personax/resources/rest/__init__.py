@@ -13,7 +13,6 @@ RespT = t.TypeVar("RespT", bound=pydt.BaseModel)
 
 
 class BearerAuth(httpx.Auth):
-
     def __init__(self, token: str):
         self.token = token
 
@@ -23,7 +22,6 @@ class BearerAuth(httpx.Auth):
 
 
 class RESTResource(abc.ABC, AsyncContextMixin):
-
     def __init__(
         self,
         base_url: str,
@@ -33,7 +31,7 @@ class RESTResource(abc.ABC, AsyncContextMixin):
         timeout: float = 10.0,
         http_client: httpx.AsyncClient | None = None,
         default_headers: dict[str, str] | None = None,
-        default_params: dict[str, t.Any] | None = None
+        default_params: dict[str, t.Any] | None = None,
     ):
         self.url = base_url
         self.http_client = http_client or httpx.AsyncClient(
@@ -42,7 +40,7 @@ class RESTResource(abc.ABC, AsyncContextMixin):
             proxy=proxy,
             timeout=timeout,
             headers=default_headers,
-            params=default_params
+            params=default_params,
         )
 
     async def request(
@@ -53,19 +51,21 @@ class RESTResource(abc.ABC, AsyncContextMixin):
         headers: t.Mapping[str, str] | None = None,
         params: t.Mapping[str, t.Any] | None = None,
         json: t.Mapping[str, t.Any] | None = None,
-        cast_to: t.Type[RespT],
+        cast_to: type[RespT],
         max_retries: int = 3,
-        retry_wait: float = 2.0
+        retry_wait: float = 2.0,
     ) -> RespT:
-
         @tenacity.retry(
             stop=tenacity.stop_after_attempt(max_retries),
             wait=tenacity.wait_fixed(retry_wait),
-            reraise=True
+            reraise=True,
         )
         async def _make_request(
-            method: str, endpoint: str, headers: t.Mapping[str, str] | None,
-            params: t.Mapping[str, t.Any] | None, json: t.Mapping[str, t.Any] | None
+            method: str,
+            endpoint: str,
+            headers: t.Mapping[str, str] | None,
+            params: t.Mapping[str, t.Any] | None,
+            json: t.Mapping[str, t.Any] | None,
         ) -> httpx.Response:
             response = await self.http_client.request(
                 method, endpoint, headers=headers, params=params, json=json

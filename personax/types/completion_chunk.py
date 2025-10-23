@@ -17,7 +17,7 @@ class CompletionChunk(BaseSchema):
     model: str
     usage: Usage | None
 
-    __slots__ = ("id", "delta", "finish_reason", "created", "model", "usage")
+    __slots__ = ("created", "delta", "finish_reason", "id", "model", "usage")
 
     def __init__(
         self,

@@ -12,7 +12,7 @@ class Message(BaseSchema):
     role: t.Literal["user", "assistant", "system"]
     content: str
 
-    __slots__ = ("role", "content")
+    __slots__ = ("content", "role")
 
     def __init__(
         self,
@@ -38,6 +38,6 @@ class Messages(RawMessages):
         return cls.model_construct(
             messages=[
                 Message(role="system", content=sys_prompt),
-                *[Message(role=msg.role, content=msg.content or '') for msg in raws.messages],
+                *[Message(role=msg.role, content=msg.content or "") for msg in raws.messages],
             ]
         )

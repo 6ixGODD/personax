@@ -11,21 +11,23 @@ import watchdog.events as evt
 import watchdog.observers as obsrv
 import watchdog.observers.api as obsrv_api
 
-logger = logging.getLogger('personax.resources')
+logger = logging.getLogger("personax.resources")
 
 
 class FileHandler(evt.FileSystemEventHandler):
-
     def __init__(self, callback: t.Callable[[], None], fpath: p.Path):
         self.callback = callback
         self.fpath = fpath
 
     def on_modified(self, event: evt.FileModifiedEvent | evt.DirModifiedEvent) -> None:
         if not (
-            event.is_directory and p.Path(
-                event.src_path if isinstance(event.src_path, str) else event.src_path.
-                decode('utf-8')
-            ) == self.fpath
+            event.is_directory
+            and p.Path(
+                event.src_path
+                if isinstance(event.src_path, str)
+                else event.src_path.decode("utf-8")
+            )
+            == self.fpath
         ):
             self.callback()
 
@@ -34,7 +36,6 @@ T = t.TypeVar("T")
 
 
 class Resource(abc.ABC, t.Generic[T]):
-
     def __init__(self, fpath: str | p.Path | os.PathLike[str]):
         self.fpath = p.Path(fpath)
         self.data: T | None = None
@@ -63,10 +64,9 @@ class Resource(abc.ABC, t.Generic[T]):
 
 
 class WatchedResource(Resource[T], abc.ABC):
-
     def __init__(self, fpath: str | p.Path | os.PathLike[str]):
         super().__init__(fpath)
-        self.observer: t.Optional[obsrv_api.BaseObserver] = None
+        self.observer: obsrv_api.BaseObserver | None = None
         self.watch()
 
     def watch(self) -> None:

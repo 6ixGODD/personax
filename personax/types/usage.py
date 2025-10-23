@@ -9,8 +9,8 @@ class Usage(BaseSchema):
     total_tokens: int
 
     __slots__ = (
-        "prompt_tokens",
         "completion_tokens",
+        "prompt_tokens",
         "total_tokens",
     )
 

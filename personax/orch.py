@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import typing as t
 
 from personax import PersonaX
@@ -8,9 +9,8 @@ from personax.utils import singleton
 
 @singleton
 class Orch(t.MutableMapping[str, PersonaX]):
-
     def __init__(self) -> None:
-        self._ins: t.Dict[str, PersonaX] = {}
+        self._ins: dict[str, PersonaX] = {}
 
     def register(self, persona: PersonaX) -> None:
         if persona.id in self._ins:
@@ -27,7 +27,7 @@ class Orch(t.MutableMapping[str, PersonaX]):
             raise KeyError(f"Persona with id '{persona_id}' is not registered.")
         return self._ins[persona_id]
 
-    def list(self) -> t.List[PersonaX]:
+    def list(self) -> builtins.list[PersonaX]:
         return list(self._ins.values())
 
     def keys(self) -> t.KeysView[str]:
