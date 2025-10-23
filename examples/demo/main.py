@@ -13,8 +13,6 @@ from __future__ import annotations
 import asyncio
 
 import halo
-import yaml
-
 from personax.completion.openai import OpenAICompletion
 from personax.completion.openai import OpenAIConfig
 from personax.context import ContextCompose
@@ -28,57 +26,62 @@ from personax.resources.template import WatchedJ2Template
 from personax.tools.weather import GetWeather
 from personax.types.message import Message
 from personax.types.message import Messages
+import yaml
 
 # ============================================================================
 # Configuration
 # ============================================================================
 
 # Load config
-with open('.config.yml', 'r', encoding='utf-8') as f:
+with open(".config.yml", encoding="utf-8") as f:
     CONFIG = yaml.safe_load(f)
 
 
 def get_user_info() -> Info:
     """Provide user information for context-aware responses."""
-    user = CONFIG['user']
+    user = CONFIG["user"]
     return Info(
-        prefname=user['prefname'],
-        ip=user['ip'],
-        user_agent=user['user_agent'],
-        platform=user['platform'],
-        timezone='Asia/Shanghai',
+        prefname=user["prefname"],
+        ip=user["ip"],
+        user_agent=user["user_agent"],
+        platform=user["platform"],
+        timezone="Asia/Shanghai",
     )
 
 
 def setup_persona() -> PersonaX:
     """Set up the PersonaX assistant with all necessary components."""
     # LLM completion service
-    llm = CONFIG['llm']
-    completion = OpenAICompletion(openai_config=OpenAIConfig(
-        base_url=llm['base_url'],
-        api_key=llm['api_key'],
-        model=llm['model'],
-    ))
+    llm = CONFIG["llm"]
+    completion = OpenAICompletion(
+        openai_config=OpenAIConfig(
+            base_url=llm["base_url"],
+            api_key=llm["api_key"],
+            model=llm["model"],
+        )
+    )
 
     # Context management with user profiling
     profile_system = ProfileContextSystem(
-        ip_service=BaiduIpLocationService(ak=CONFIG['services']['baidu_ip']['ak']),
-        template=WatchedJ2Template(CONFIG['templates']['profile']),
+        ip_service=BaiduIpLocationService(ak=CONFIG["services"]["baidu_ip"]["ak"]),
+        template=WatchedJ2Template(CONFIG["templates"]["profile"]),
     )
-    context = ContextCompose(profile_system,
-                             context_template=WatchedJ2Template(CONFIG['templates']['main']))
+    context = ContextCompose(
+        profile_system, context_template=WatchedJ2Template(CONFIG["templates"]["main"])
+    )
 
     # Weather tool
-    weather_tool = GetWeather(weather_srv=AmapWeatherInfoService(
-        key=CONFIG['services']['amap_weather']['key']))
+    weather_tool = GetWeather(
+        weather_srv=AmapWeatherInfoService(key=CONFIG["services"]["amap_weather"]["key"])
+    )
 
     # Create core and persona
-    persona_cfg = CONFIG['persona']
+    persona_cfg = CONFIG["persona"]
 
     class WeatherAssistant(PersonaX):
-        name = persona_cfg['name']
-        version = persona_cfg['version']
-        scenario = persona_cfg['scenario']
+        name = persona_cfg["name"]
+        version = persona_cfg["version"]
+        scenario = persona_cfg["scenario"]
 
     core = Core(
         completion=completion,
@@ -99,8 +102,8 @@ async def chat():
     """Main chat loop."""
     persona = setup_persona()
     history: list[Message] = []
-    streaming = CONFIG['chat'].get('streaming_mode', True)
-    show_spinner = CONFIG['chat'].get('show_spinner', True)
+    streaming = CONFIG["chat"].get("streaming_mode", True)
+    show_spinner = CONFIG["chat"].get("show_spinner", True)
     spinner = halo.Halo(text="Thinking", spinner="dots")
 
     # Welcome message
@@ -132,11 +135,11 @@ async def chat():
             if user_input.lower() in ("exit", "quit"):
                 print("\n👋 Thanks for trying PersonaX! Goodbye!\n")
                 break
-            elif user_input.lower() == "clear":
+            if user_input.lower() == "clear":
                 history.clear()
                 print("\n🔄 Conversation history cleared!\n")
                 continue
-            elif user_input.lower() == "stream":
+            if user_input.lower() == "stream":
                 streaming = not streaming
                 print(f"\n🔄 Switched to {'Streaming ⚡' if streaming else 'Standard 📝'} mode!\n")
                 continue
@@ -148,7 +151,11 @@ async def chat():
                 # Streaming mode
                 print("🤖 Assistant: ", end="", flush=True)
                 assistant_message = ""
-                response = await persona.complete(messages=Messages(messages=history), stream=True)
+                response = await persona.complete(
+                    messages=Messages(messages=history),
+                    stream=True,
+                    extras={"profile.info": get_user_info()},
+                )
                 async for chunk in response:
                     print(chunk.delta.content or "", end="", flush=True)
                     assistant_message += chunk.delta.content or ""
@@ -157,7 +164,11 @@ async def chat():
                 # Standard mode
                 if show_spinner:
                     spinner.start()
-                response = await persona.complete(messages=Messages(messages=history), stream=False)
+                response = await persona.complete(
+                    messages=Messages(messages=history),
+                    stream=False,
+                    extras={"profile.info": get_user_info()},
+                )
                 assistant_message = response.message.content
                 if show_spinner:
                     spinner.stop()
