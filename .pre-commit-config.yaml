@@ -5,5 +5,5 @@ repos:
       - id: ruff
         args:
           - --fix
-          - --exit-zero  # Omit error code on lint failures. TODO: dev only
+          - --exit-zero-even-if-changed
       - id: ruff-format
