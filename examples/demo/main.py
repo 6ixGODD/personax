@@ -64,7 +64,6 @@ def setup_persona() -> PersonaX:
     profile_system = ProfileContextSystem(
         ip_service=BaiduIpLocationService(ak=CONFIG['services']['baidu_ip']['ak']),
         template=WatchedJ2Template(CONFIG['templates']['profile']),
-        provide_info=get_user_info,
     )
     context = ContextCompose(profile_system,
                              context_template=WatchedJ2Template(CONFIG['templates']['main']))

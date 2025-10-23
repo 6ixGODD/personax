@@ -69,8 +69,22 @@ class Core(AsyncContextMixin):
         stream: bool = False,
         max_completion_tokens: int | Unset = UNSET,
         prompt_cache_key: str | Unset = UNSET,
+        extras: dict[str, t.Any] | None = None,
     ) -> Completion | AsyncStream[CompletionChunk]:
-        messages = await self.context.build(messages)
+        """Complete a set of messages.
+
+        Args:
+            messages: The input messages to complete.
+            chatcmpl_id: Optional ID for the chat completion.
+            stream: Whether to stream the completion.
+            max_completion_tokens: Maximum tokens for the completion.
+            prompt_cache_key: Optional cache key for the prompt.
+            extras: Additional context extras.
+
+        Returns:
+            A Completion object or an AsyncStream of CompletionChunk objects.
+        """
+        messages = await self.context.build(messages, extras)
         toolset = list(self.toolset)
         return await self.completion.complete(
             messages=messages,

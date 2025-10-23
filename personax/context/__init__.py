@@ -185,7 +185,11 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]], AsyncContextMixin):
         for system in self.systems:
             await system.close()
 
-    async def build(self, messages: Messages) -> CompatMessages:
+    async def build(
+        self,
+        messages: Messages,
+        extras: dict[str, t.Any] | None = None,
+    ) -> CompatMessages:
         """Build the complete contextual message structure by running all
         systems.
 
@@ -196,12 +200,13 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]], AsyncContextMixin):
 
         Args:
             messages: The input messages from the conversation
+            extras: Additional context data to include
 
         Returns:
             CompatMessages with enriched system prompt containing all context
         """
         messages_ = messages.model_copy()
-        context = Context(messages=list(messages_.messages), context={})
+        context = Context(messages=list(messages_.messages), context=extras or {})
 
         for system in self.systems:
             # 1. Preprocess phase: allow each system to modify the context

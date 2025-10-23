@@ -68,15 +68,13 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
         *,
         ip_service: IpLocationService | None = None,
         template: Template,
-        provide_info: t.Callable[[], Info],
     ) -> None:
         self.ip_service = ip_service
         self.template = template
-        self.provide_info = provide_info
 
     async def build(self, context: Context | str) -> ProfileContext:
         # Get basic information
-        info = self.provide_info()
+        info = context.context.get('profile.info', Info())
         # Get current timestamp in the specified timezone
         try:
             tz = zoneinfo.ZoneInfo(info.get("timezone", "UTC") or "UTC")
