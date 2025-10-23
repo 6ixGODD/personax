@@ -29,6 +29,8 @@ exclude = [
     "node_modules",
     "site-packages",
     "venv",
+    "examples", # Example code
+    "deps",     # Dependency directories
 ]
 
 # Set the maximum line length and indent width
@@ -41,20 +43,20 @@ target-version = "py311"
 [lint]
 # Enable specific rule sets
 select = [
-    "E",     # pycodestyle errors
-    "W",     # pycodestyle warnings
-    "F",     # pyflakes
-    "I",     # isort (import sorting)
-    "N",     # pep8-naming (naming conventions)
-    "UP",    # pyupgrade (modern Python syntax)
-    "B",     # flake8-bugbear (common bugs)
-    "C4",    # flake8-comprehensions (list/dict comprehensions)
-    "SIM",   # flake8-simplify (code simplification)
-    "RET",   # flake8-return (return statements)
-    "ARG",   # flake8-unused-arguments
-    "PTH",   # flake8-use-pathlib (prefer pathlib over os.path)
-    "PLE",   # pylint (code quality and complexity)
-    "RUF",   # Ruff-specific rules
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "N",   # pep8-naming (naming conventions)
+    "UP",  # pyupgrade (modern Python syntax)
+    "B",   # flake8-bugbear (common bugs)
+    "C4",  # flake8-comprehensions (list/dict comprehensions)
+    "SIM", # flake8-simplify (code simplification)
+    "RET", # flake8-return (return statements)
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib (prefer pathlib over os.path)
+    "PLE", # pylint (code quality and complexity)
+    "RUF", # Ruff-specific rules
 ]
 
 # Ignore specific rules
@@ -81,7 +83,7 @@ section-order = [
 ]
 
 # Specify first-party packages for proper import grouping
-known-first-party = ["prototypex"]
+known-first-party = ["personax"]
 
 [lint.pydocstyle]
 # Use Google-style docstring convention
