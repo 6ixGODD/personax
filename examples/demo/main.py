@@ -20,8 +20,8 @@ from personax.context.profile import Info
 from personax.context.profile import ProfileContextSystem
 from personax.core import Core
 from personax.core import PersonaX
-from personax.resources.rest.ip.baidu import BaiduIpLocationService
-from personax.resources.rest.weather.amap import AmapWeatherInfoService
+from personax.resources.restful.ip.baidu import BaiduIpLocationService
+from personax.resources.restful.weather.amap import AmapWeatherInfoService
 from personax.resources.template import WatchedJ2Template
 from personax.tools.weather import GetWeather
 from personax.types.message import Message
