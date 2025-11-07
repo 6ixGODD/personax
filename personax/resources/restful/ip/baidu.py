@@ -8,14 +8,16 @@ import httpx
 import pydantic as pydt
 import typing_extensions as te
 
-from personax.exceptions import RESTResourceError
-from personax.resources.rest.ip import IpLocationService
-from personax.resources.rest.ip import Location
+from personax.exceptions import RESTError
+from personax.resources.restful.ip import IpLocationService
+from personax.resources.restful.ip import Location
 
 logger = logging.getLogger("personax.resources.rest.ip.baidu")
 
 
 class BaiduLocationParams(te.TypedDict):
+    """Request parameters for Baidu IP Location API."""
+
     ip: str
     """IP address to locate"""
 
@@ -28,6 +30,8 @@ class BaiduLocationParams(te.TypedDict):
 
 
 class BaiduLocationAddressDetail(te.TypedDict):
+    """Detailed address components from Baidu location response."""
+
     adcode: str
     """Administrative division code"""
 
@@ -51,6 +55,8 @@ class BaiduLocationAddressDetail(te.TypedDict):
 
 
 class BaiduLocationContent(te.TypedDict):
+    """Location content from Baidu API response."""
+
     address: str
     """Formatted address"""
 
@@ -62,6 +68,8 @@ class BaiduLocationContent(te.TypedDict):
 
 
 class BaiduLocation(pydt.BaseModel):
+    """Baidu IP Location API response model."""
+
     status: int
     """Response status code, 0 indicates success"""
 
@@ -76,6 +84,44 @@ class BaiduLocation(pydt.BaseModel):
 
 
 class BaiduIpLocationService(IpLocationService):
+    """Baidu Map IP geolocation service implementation.
+
+    Provides IP-to-location lookup using Baidu Maps API with automatic caching
+    of results to reduce API calls and improve performance.
+
+    The service uses GCJ-02 coordinate system (Chinese Mars coordinates) by
+    default, which is the standard for most Chinese mapping services.
+
+    Attributes:
+        ak: Baidu API Access Key.
+        max_retries: Maximum retry attempts for failed requests.
+        retry_wait: Wait time between retries in seconds.
+
+    Args:
+        ak: Baidu API Access Key for authentication.
+        timeout: Request timeout in seconds. Defaults to 10.0.
+        max_retries: Maximum retry attempts. Defaults to 3.
+        retry_wait: Wait time between retries. Defaults to 2.0.
+        http_client: Optional pre-configured httpx client.
+
+    Example:
+        ```python
+        service = BaiduIpLocationService(ak="YOUR_BAIDU_AK")
+
+        location = await service.locate("123.45.67.89")
+        print(location["address"])  # "北京市海淀区..."
+        print(location["adcode"])  # "110108"
+
+        # Results are cached - second call uses cache
+        location2 = await service.locate("123.45.67.89")  # Instant
+        ```
+
+    Note:
+        - Results are cached with LRU eviction (max 1024 entries)
+        - Requires valid Baidu API Access Key
+        - Returns Chinese addresses for Chinese IPs
+        - Uses GCJ-02 coordinate system
+    """
     def __init__(
         self,
         ak: str,
@@ -94,6 +140,23 @@ class BaiduIpLocationService(IpLocationService):
 
     @alru.alru_cache(maxsize=1024)
     async def locate(self, ip: str, /) -> Location:
+        """Lookup location from IP address with caching.
+
+        Args:
+            ip: IP address to locate.
+
+        Returns:
+            Location with address and administrative code.
+
+        Raises:
+            RESTError: If Baidu API returns an error status.
+
+        Example:
+            ```python
+            location = await service.locate("114.114.114.114")
+            print(location["address"])  # "江苏省南京市..."
+            ```
+        """
         params = BaiduLocationParams(ip=ip, ak=self.ak, coor="gcj02")
         response = await self.request(
             "ip",
@@ -105,7 +168,7 @@ class BaiduIpLocationService(IpLocationService):
         )
         if response.status != 0:
             logger.error(f"Baidu Location IP Service error for IP {ip}: {response.message}")
-            raise RESTResourceError(f"Baidu Location IP Service error: {response.message}")
+            raise RESTError(f"Baidu Location IP Service error: {response.message}")
         logger.debug(f"Baidu Location IP Service response for IP {ip}: {response}")
         return Location(
             address=response.content["address"], adcode=response.content["address_detail"]["adcode"]

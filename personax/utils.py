@@ -75,7 +75,7 @@ def filter_kwargs(
     Returns:
         The filtered keyword arguments with valid parameter names only.
     """
-    valid_params = _get_func_params(fn)
+    valid_params = _get_func_params(fn)  # type: ignore
 
     if pref:
         # Remove prefix and filter
@@ -127,13 +127,9 @@ def flatten_dict(
     return dict(items)
 
 
-@t.runtime_checkable
-class AsyncContextMixin(t.Protocol):
-    async def init(self) -> None:
-        pass
-
-    async def close(self) -> None:
-        pass
+class AsyncContextMixin:
+    async def init(self) -> None: ...
+    async def close(self) -> None: ...
 
     async def __aenter__(self) -> t.Self:
         await self.init()
@@ -144,9 +140,6 @@ class AsyncContextMixin(t.Protocol):
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         traceback: types.TracebackType | None,
-        /,
     ) -> t.Literal[False]:
         await self.close()
-        if exc_type is not None:
-            raise (exc_val or exc_type()).with_traceback(traceback) from exc_val
-        return False  # do not suppress exceptions
+        return False

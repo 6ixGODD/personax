@@ -13,7 +13,6 @@ import openai.types.chat.chat_completion_message_function_tool_call_param as fn_
 from personax.completion import CompletionSystem
 from personax.exceptions import ToolCallError
 from personax.tools import BaseToolType
-from personax.types import BaseModel
 from personax.types.compat.message import Message
 from personax.types.compat.message import Messages
 from personax.types.compat.tool_calls import Function
@@ -35,24 +34,158 @@ logger = logging.getLogger("persomna.completion.openai")
 def map_finish_reason(
     reason: t.Literal["stop", "length", "tool_calls", "content_filter", "function_call"] | None,
 ) -> t.Literal["stop", "length", "content_filter"]:
+    """Map OpenAI finish reasons to standardized reasons.
+
+    Args:
+        reason: OpenAI finish reason.
+
+    Returns:
+        Standardized finish reason (tool_calls/function_call mapped to stop).
+    """
     if reason and reason in ("stop", "length", "content_filter"):
         return t.cast(t.Literal["stop", "length", "content_filter"], reason)
     return "stop"
 
 
-class OpenAIConfig(BaseModel):
+class OpenAIConfig(t.NamedTuple):
+    """Configuration for OpenAI API client."""
+
     api_key: str
-    organization: str | None = None
-    project: str | None = None
+    """OpenAI API authentication key."""
+
     model: str
+    """Model identifier for completions."""
+
     base_url: str
+    """API endpoint base URL."""
+
+    organization: str | None = None
+    """Optional organization ID."""
+
+    project: str | None = None
+    """Optional project ID."""
+
     timeout: float | None = None
+    """Request timeout in seconds."""
+
     max_retries: int = 3
+    """Maximum number of retry attempts."""
+
     default_headers: t.Mapping[str, str] | None = None
+    """Additional headers for all requests."""
+
     default_query: t.Mapping[str, object] | None = None
+    """Additional query parameters for all requests."""
 
 
 class OpenAICompletion(CompletionSystem):
+    """OpenAI-compatible completion system with automatic tool calling.
+
+    Implements the CompletionSystem interface for OpenAI-compatible APIs,
+    with built-in support for multi-turn tool calling, streaming, and
+    configurable generation parameters.
+
+    Key Features:
+    - Automatic tool call iteration until final response
+    - Streaming and non-streaming modes
+    - Configurable temperature, penalties, and other parameters
+    - Support for prompt caching via prompt_cache_key
+    - Comprehensive logging for debugging
+
+    The system automatically handles tool calling loops:
+    1. LLM generates response (potentially with tool calls)
+    2. Tool calls are executed and results added to history
+    3. Process repeats until LLM produces final response without tool calls
+
+    Attributes:
+        model: The OpenAI model identifier for completions.
+        client: Configured AsyncOpenAI client instance.
+        temperature: Sampling temperature (0-2).
+        presence_penalty: Presence penalty (-2 to 2).
+        frequency_penalty: Frequency penalty (-2 to 2).
+        verbosity: Response verbosity level.
+        top_p: Nucleus sampling parameter (0-1).
+
+    Args:
+        openai_config: OpenAI client configuration.
+        temperature: Sampling temperature for randomness control.
+        presence_penalty: Penalty for token presence (encourages new topics).
+        frequency_penalty: Penalty for token frequency (reduces repetition).
+        verbosity: Response detail level ("low", "medium", "high").
+        top_p: Nucleus sampling threshold.
+
+    Example:
+        ```python
+        # Basic setup
+        completion_system = OpenAICompletion(
+            openai_config=OpenAIConfig(
+                api_key="sk-...",
+                model="gpt-4",
+                base_url="https://api.openai.com/v1",
+                timeout=30.0,
+                max_retries=3,
+            ),
+            temperature=0.7,
+            presence_penalty=0.0,
+            frequency_penalty=0.0,
+        )
+
+
+        # Non-streaming completion
+        messages = Messages.from_raws(
+            raws=Messages(
+                messages=[
+                    Message(role="user", content="What is 2+2?")
+                ]
+            ),
+            sys_prompt="You are a helpful math assistant.",
+        )
+
+        completion = await completion_system.complete(
+            messages,
+            model="gpt-4",
+            max_completion_tokens=100,
+        )
+        print(completion.message.content)  # "2+2 equals 4."
+
+
+        # Streaming completion
+        stream = await completion_system.complete(
+            messages,
+            model="gpt-4",
+            stream=True,
+        )
+        async for chunk in stream:
+            if chunk.delta.content:
+                print(chunk.delta.content, end="", flush=True)
+
+
+        # With automatic tool calling
+        completion = await completion_system.complete(
+            messages,
+            model="gpt-4",
+            tools=[GetWeather(), SearchWeb()],
+            max_completion_tokens=500,
+        )
+        # System automatically iterates through tool calls
+
+
+        # With prompt caching
+        completion = await completion_system.complete(
+            messages,
+            model="gpt-4",
+            prompt_cache_key="math_assistant_v1",  # Cache system prompt
+        )
+        ```
+
+    Note:
+        - The model parameter in complete() is for metadata only
+        - Actual model is configured in OpenAIConfig during initialization
+        - Tool calling triggers automatic multi-turn iteration
+        - Streaming mode yields chunks for each iteration
+        - All OpenAI errors are propagated to caller
+    """
+
     def __init__(
         self,
         *,
@@ -109,6 +242,25 @@ class OpenAICompletion(CompletionSystem):
         prompt_cache_key: str | Unset = UNSET,
         **kwargs: t.Any,
     ) -> Completion | AsyncStream[CompletionChunk]:
+        """Generate completion with optional tool calling.
+
+        Dispatches to streaming or non-streaming implementation based on
+        the stream parameter. Handles automatic tool call iteration in
+        both modes.
+
+        Args:
+            messages: Input messages with system prompt.
+            tools: Tools available for function calling.
+            chatcmpl_id: Optional completion ID for response.
+            stream: Whether to stream the response.
+            max_completion_tokens: Maximum tokens to generate.
+            model: Model identifier for response metadata.
+            prompt_cache_key: Optional key for prompt caching.
+            **kwargs: Additional OpenAI API parameters.
+
+        Returns:
+            Completion object if stream=False, AsyncStream if stream=True.
+        """
         msg_count = len(list(messages))
         tool_names = [tool.__function_name__ for tool in tools]
 
@@ -153,6 +305,26 @@ class OpenAICompletion(CompletionSystem):
         prompt_cache_key: str | Unset = UNSET,
         **kwargs: t.Any,
     ) -> Completion:
+        """Non-streaming completion with automatic tool call iteration.
+
+        Implements the full tool calling loop:
+        1. Send messages to LLM
+        2. If response contains tool calls, execute them
+        3. Add tool results to message history
+        4. Repeat until LLM produces final response
+
+        Args:
+            messages: Input message sequence.
+            tools: Available tool instances.
+            chatcmpl_id: Optional completion ID.
+            max_completion_tokens: Token generation limit.
+            model: Model identifier for metadata.
+            prompt_cache_key: Optional cache key.
+            **kwargs: Additional API parameters.
+
+        Returns:
+            Final completion after all tool iterations.
+        """
         msgs = list(messages)  # type: t.List[Message | ToolCalls | ToolCallsParams]
         tools_map = {tool.__function_name__: tool for tool in tools}
         iteration = 0
@@ -333,6 +505,24 @@ class OpenAICompletion(CompletionSystem):
         prompt_cache_key: str | Unset = UNSET,
         **kwargs: t.Any,
     ) -> AsyncStream[CompletionChunk]:
+        """Streaming completion with automatic tool call iteration.
+
+        Streams chunks from each iteration of the tool calling loop. Tool
+        calls are assembled from delta chunks, executed, and results added
+        to history before starting the next iteration.
+
+        Args:
+            messages: Input message sequence.
+            tools: Available tool instances.
+            chatcmpl_id: Optional completion ID.
+            max_completion_tokens: Token generation limit.
+            model: Model identifier for metadata.
+            prompt_cache_key: Optional cache key.
+            **kwargs: Additional API parameters.
+
+        Returns:
+            AsyncStream yielding chunks for all iterations.
+        """
         msg_list = list(messages)  # type: t.List[Message | ToolCalls | ToolCallsParams]
         tools_map = {tool.__function_name__: tool for tool in tools}
 
@@ -652,6 +842,7 @@ class OpenAICompletion(CompletionSystem):
         created: int,
         model: str,
     ) -> AsyncStream[CompletionChunk]:
+        """Parse OpenAI stream chunks into standardized CompletionChunks."""
         logger.debug("Parsing stream with chatcmpl_id=%s, model=%s", chatcmpl_id, model)
 
         async def _gen() -> t.AsyncGenerator[CompletionChunk, None]:

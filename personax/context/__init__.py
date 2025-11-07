@@ -14,88 +14,240 @@ _Mapping: t.TypeAlias = t.Mapping[str, _Primitive | t.Any]
 BuiltT = t.TypeVar("BuiltT", bound=_Mapping)
 
 
-class ContextSystem(abc.ABC, t.Generic[BuiltT]):
-    """Abstract base class for context systems that process and enrich
-    conversational context.
+class ContextSystem(AsyncContextMixin, abc.ABC, t.Generic[BuiltT]):
+    """Abstract base class for context components in conversational AI systems.
 
     A ContextSystem represents a single source or processor of contextual
-    information (e.g., vector database, knowledge graph, user profile service)
-    that can:
-    1. Preprocess the context before building
-    2. Build its specific contextual content
-    3. Postprocess the context after building
-    4. Parse its built content into a string format for LLM consumption
+    information that enriches LLM prompts. Examples include knowledge retrieval
+    systems (vector databases, knowledge graphs), user profile services, or
+    any component that contributes domain-specific context.
+
+    Context Building Lifecycle:
+        1. Preprocess: Inspect and modify the context before building
+        2. Build: Generate system-specific structured contextual data
+        3. Postprocess: React to built content and modify context accordingly
+        4. Parse: Convert structured data into text for LLM consumption
+
+    Each ContextSystem must define a unique __key__ to namespace its built
+    content within the shared context dictionary.
 
     Type Parameters:
-        BuiltT: The type of structured data this system produces (must be a
-            mapping)
+        BuiltT: The type of structured data this system produces. Must be a
+            mapping (typically TypedDict) containing the system's contextual
+            information.
+
+    Attributes:
+        __key__: Unique identifier for this context system. Must be defined
+            by subclasses as a class variable.
+
+    Example:
+        ```python
+        class WeatherContext(t.TypedDict):
+            temperature: float
+            condition: str
+            location: str
+
+
+        class WeatherContextSystem(ContextSystem[WeatherContext]):
+            __key__ = "weather"
+
+            async def build(
+                self, context: Context | str
+            ) -> WeatherContext:
+                # Extract location from user profile or messages
+                if isinstance(context, Context):
+                    location = context.context.get(
+                        "profile", {}
+                    ).get("location")
+                else:
+                    location = context  # Direct string query
+
+                # Fetch weather data
+                weather = await self.weather_api.get_current(
+                    location
+                )
+                return WeatherContext(
+                    temperature=weather.temp,
+                    condition=weather.condition,
+                    location=location,
+                )
+
+            async def parse(self, built: WeatherContext) -> str:
+                return (
+                    f"Current weather in {built['location']}: "
+                    f"{built['temperature']}°C, {built['condition']}"
+                )
+
+
+        # Usage with ContextCompose
+        weather_sys = WeatherContextSystem()
+        await weather_sys.init()
+
+        context = Context(
+            messages=[
+                Message(role="user", content="What should I wear?")
+            ],
+            context={"profile": {"location": "San Francisco"}},
+        )
+
+        # Build phase
+        weather_ctx = await weather_sys.build(context)
+        # Returns: {"temperature": 15.5, "condition": "Cloudy", "location": "SF"}
+
+        # Parse phase
+        text = await weather_sys.parse(weather_ctx)
+        # Returns: "Current weather in San Francisco: 15.5°C, Cloudy"
+
+        await weather_sys.close()
+        ```
     """
 
-    __key__: t.ClassVar[str]  # Unique key identifying this context system
+    __key__: t.ClassVar[str]
 
     async def preprocess(self, context: Context) -> Context:
-        """Preprocess the context before this system builds its content.
+        """Prepare context before building system-specific content.
 
-        This phase allows the system to:
-        - Inspect existing messages and context
-        - Extract information needed for the build phase
-        - Modify the context for downstream systems
+        The preprocess phase allows the system to:
+        - Extract information from messages or existing context
+        - Validate or transform data needed for the build phase
+        - Enrich context for downstream systems in the composition
+
+        This phase runs before build() and can modify the shared Context object
+        that will be passed to subsequent systems in a ContextCompose.
 
         Args:
-            context: The current context containing messages and accumulated
-                data
+            context: Current conversation context with messages and accumulated
+                data from preceding systems.
 
         Returns:
-            Modified context (default implementation returns unchanged)
+            Modified context (default returns unchanged). Changes persist for
+            downstream systems.
+
+        Example:
+            ```python
+            async def preprocess(self, context: Context) -> Context:
+                # Extract user intent from last message
+                last_msg = context.messages[-1].content
+                intent = await self.intent_classifier.classify(last_msg)
+                context.context["intent"] = intent
+                return context
+            ```
         """
-        return context  # override if needed
+        return context
 
     async def postprocess(self, context: Context, _built: BuiltT) -> Context:
-        """Postprocess the context after this system has built its content.
+        """React to built content and modify context after building.
 
-        This phase allows the system to:
-        - Add metadata based on what was built
-        - Modify the context for downstream systems
-        - Perform cleanup or validation
+        The postprocess phase allows the system to:
+        - Add metadata based on what was retrieved or generated
+        - Modify messages based on built content (e.g., replace images with text)
+        - Enrich context for downstream systems using insights from build phase
+
+        This phase runs after build() and can leverage the built content to
+        make informed modifications to the context.
 
         Args:
-            context: The current context
-            _built: The content this system just built
+            context: Current conversation context.
+            _built: The structured data just built by this system.
 
         Returns:
-            Modified context (default implementation returns unchanged)
+            Modified context (default returns unchanged). Changes persist for
+            downstream systems.
+
+        Example:
+            ```python
+            async def postprocess(
+                self, context: Context, built: MyContext
+            ) -> Context:
+                # Add knowledge confidence score to context
+                context.context["knowledge_confidence"] = built[
+                    "confidence"
+                ]
+
+                # Mark messages that were used in retrieval
+                for i in built["used_message_indices"]:
+                    context.messages[i].metadata[
+                        "used_for_retrieval"
+                    ] = True
+
+                return context
+            ```
         """
-        return context  # override if needed
+        return context
 
     async def parse(self, built: BuiltT) -> str | None:
-        """Parse the built structured data into a string format for LLM
-        consumption.
+        """Convert structured built data into text for LLM consumption.
 
-        This method converts the system's structured output into human-readable
-        text that will be included in the system prompt.
+        Transforms the system's structured output into natural language that
+        will be incorporated into the system prompt. This text provides the
+        LLM with the contextual information needed for informed responses.
 
         Args:
-            built: The structured data built by this system
+            built: The structured data produced by build().
 
         Returns:
-            String representation for the LLM, or None to omit from final prompt
+            Human-readable text representation, or None to exclude this system's
+            content from the final prompt.
+
+        Example:
+            ```python
+            async def parse(self, built: KnowledgeContext) -> str:
+                if not built["results"]:
+                    return None  # No knowledge found, omit from prompt
+
+                sections = []
+                for result in built["results"]:
+                    sections.append(
+                        f"- {result['title']}: {result['summary']}"
+                    )
+                return "Relevant knowledge:\n" + "\n".join(sections)
+            ```
         """
 
     async def init(self) -> None:
-        """Initialize the context system.
+        """Initialize system resources and connections.
 
-        This method should set up any required resources, connections, or state.
-        Called when entering the async context manager.
+        Called when entering the async context manager. Should set up any
+        required resources such as:
+        - Database connections
+        - API clients
+        - Model loading
+        - Cache initialization
+
+        Example:
+            ```python
+            async def init(self) -> None:
+                self.db_client = await DatabaseClient.connect(
+                    self.db_url
+                )
+                self.embedding_model = await load_embedding_model()
+            ```
         """
 
     async def close(self) -> None:
-        """Clean up and close the context system.
+        """Clean up system resources and connections.
 
-        This method should release resources and perform cleanup. Called when
-        exiting the async context manager.
+        Called when exiting the async context manager. Should release:
+        - Database connections
+        - File handles
+        - Network connections
+        - Cached resources
+
+        Example:
+            ```python
+            async def close(self) -> None:
+                await self.db_client.disconnect()
+                self.embedding_model.unload()
+            ```
         """
 
     def __init_subclass__(cls, **kwargs: t.Any) -> None:
+        """Validate that subclasses define a unique __key__.
+
+        Raises:
+            NotImplementedError: If __key__ is not defined.
+            ValueError: If __key__ is not a non-empty string.
+        """
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, "__key__"):
             raise NotImplementedError(
@@ -109,54 +261,170 @@ class ContextSystem(abc.ABC, t.Generic[BuiltT]):
 
     __repr__ = __str__
 
-    # For preparing messages for LLM calls.
     @t.overload
     async def build(self, context: Context) -> BuiltT:
-        """Build from a full Context object (for preparing messages for LLM
-        calls)."""
+        """Build from full Context object for LLM message preparation."""
 
-    # For tool calls with string input/output.
     @t.overload
     async def build(self, context: str) -> BuiltT:
-        """Build from a string input (for tool calls with string
-        input/output)."""
+        """Build from string input for tool-based retrieval."""
 
     @abc.abstractmethod
     async def build(self, context: Context | str) -> BuiltT:
-        """Build the contextual content for this system.
+        """Generate system-specific contextual content.
 
-        This is the core method where the system generates its specific
-        contextual information based on the input.
+        The core method where the system produces its structured contextual
+        information. Supports two usage patterns:
+
+        1. Context-based: Build from full conversation context including messages,
+           user profile, and data from preceding systems in the composition.
+        2. String-based: Build from direct text query, useful for tool-based
+           retrieval where the system acts as a knowledge lookup function.
 
         Args:
-            context: Either a full Context object or a string input
+            context: Either a full Context object containing conversation history
+                and accumulated data, or a string query for direct retrieval.
 
         Returns:
             Structured data (BuiltT) containing this system's contextual
-            information
+            information. This will be stored in the shared context dictionary
+            under the system's __key__.
+
+        Example:
+            ```python
+            async def build(
+                self, context: Context | str
+            ) -> KnowledgeContext:
+                # String-based: direct query
+                if isinstance(context, str):
+                    query = context
+                else:
+                    # Context-based: extract query from messages
+                    query = self.build_query(context)
+
+                # Retrieve knowledge
+                results = await self.vector_db.search(query, top_k=5)
+
+                return KnowledgeContext(
+                    query=query,
+                    results=[
+                        {
+                            "title": r.title,
+                            "content": r.content,
+                            "score": r.score,
+                        }
+                        for r in results
+                    ],
+                    metadata={"retrieval_time": time.time()},
+                )
+            ```
         """
 
 
-class ContextCompose(t.Sequence[ContextSystem[t.Any]], AsyncContextMixin):
-    """Composition of multiple ContextSystems into a unified context pipeline.
+class ContextCompose(AsyncContextMixin, t.Sequence[ContextSystem[t.Any]]):
+    """Orchestrator for composing multiple ContextSystems into a unified pipeline.
 
-    ContextCompose orchestrates multiple context systems, running them in
-    sequence through a three-phase process:
-    1. Preprocess: Each system can inspect and modify the context
-    2. Build: Each system generates its contextual content
-    3. Postprocess: Each system can react to what was built
+    ContextCompose manages the sequential execution of multiple context systems,
+    coordinating their three-phase lifecycle (preprocess → build → postprocess)
+    and assembling their outputs into an enriched system prompt for the LLM.
 
-    The final output assembles all system contexts into a structured message
-    format with an enriched system prompt.
+    Execution Flow:
+        For each system in sequence:
+        1. Preprocess: System inspects and modifies shared context
+        2. Build: System generates its structured contextual data
+        3. Store: Built data is stored in context dictionary under system's __key__
+        4. Postprocess: System reacts to its built content
 
-    Implements Sequence protocol to allow indexing and iteration over systems.
+        After all systems complete:
+        5. Parse: Each system's structured data is converted to text
+        6. Render: Context template assembles all parsed text into system prompt
+        7. Assemble: System prompt is combined with conversation messages
+
+    Context Propagation:
+        - Each system can access data from preceding systems via context.context
+        - Modifications in preprocess/postprocess propagate to downstream systems
+        - Built data is namespaced by __key__ to prevent conflicts
+
+    Implements the Sequence protocol, allowing indexing and iteration over
+    constituent systems.
+
+    Attributes:
+        systems: Tuple of ContextSystem instances in execution order.
+        context_template: Jinja2 template for rendering the final system prompt.
 
     Args:
-        *systems: Variable number of ContextSystem instances to compose
-        context_template: Jinja2 template string for assembling the final
-            system prompt. Receives 'systems' (parsed content) and 'raw' (raw
-            built content) as template variables.
+        *systems: Variable number of ContextSystem instances to compose.
+            Order matters: earlier systems can influence later ones.
+        context_template: Template for assembling the system prompt. Receives:
+            - `systems`: Dict mapping __key__ to parsed text from each system
+            - `raw`: Dict mapping __key__ to raw structured data from each system
 
+    Example:
+        ```python
+        # Define template that combines all system contexts
+        template = Template('''
+        User Profile: {{ systems.profile }}
+
+        Knowledge Base:
+        {{ systems.knowledge }}
+
+        Current Weather: {{ systems.weather }}
+
+        Please respond based on the above context.
+        ''')
+
+        # Compose multiple systems
+        compose = ContextCompose(
+            ProfileContextSystem(...),
+            KnowledgeContextSystem(...),
+            WeatherContextSystem(...),
+            context_template=template,
+        )
+
+        await compose.init()
+
+        # Build enriched messages
+        messages = Messages(
+            messages=[
+                Message(
+                    role="user", content="What should I wear today?"
+                )
+            ]
+        )
+        enriched = await compose.build(
+            messages,
+            extras={"profile.info": {"location": "San Francisco"}},
+        )
+
+        # enriched now contains:
+        # - Original user message
+        # - System prompt with profile, knowledge, and weather context
+
+        await compose.close()
+
+
+        # Advanced: Access individual systems
+        profile_system = compose[0]  # By index
+        for system in compose:  # Iteration
+            print(system.__key__)
+
+
+        # Advanced: Template with raw data access
+        advanced_template = Template('''
+        Profile: {{ systems.profile }}
+
+        Knowledge ({{ raw.knowledge.results|length }} results):
+        {{ systems.knowledge }}
+
+        Confidence: {{ raw.knowledge.metadata.confidence }}
+        ''')
+        ```
+
+    Note:
+        - Systems execute in the order provided to __init__
+        - Each system's build() receives context with data from all preceding systems
+        - Template has access to both parsed text (`systems`) and raw data (`raw`)
+        - All systems share the same lifecycle (init/close managed together)
     """
 
     @t.overload
@@ -166,11 +434,25 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]], AsyncContextMixin):
     def __getitem__(self, index: slice) -> t.Sequence[ContextSystem[t.Any]]: ...
 
     def __getitem__(
-        self, index: int | slice
+        self,
+        index: int | slice,
     ) -> ContextSystem[t.Any] | t.Sequence[ContextSystem[t.Any]]:
+        """Access constituent systems by index or slice.
+
+        Args:
+            index: Integer index or slice for accessing systems.
+
+        Returns:
+            Single ContextSystem if indexed by int, sequence if sliced.
+        """
         return self.systems[index]
 
     def __len__(self) -> int:
+        """Get the number of constituent systems.
+
+        Returns:
+            Total number of systems in this composition.
+        """
         return len(self.systems)
 
     def __init__(self, *systems: ContextSystem[t.Any], context_template: Template) -> None:
@@ -178,10 +460,20 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]], AsyncContextMixin):
         self.context_template = context_template
 
     async def init(self) -> None:
+        """Initialize all constituent context systems.
+
+        Calls init() on each system in sequence. Should be called before
+        performing any context building operations.
+        """
         for system in self.systems:
             await system.init()
 
     async def close(self) -> None:
+        """Close and cleanup all constituent context systems.
+
+        Calls close() on each system in sequence. Should be called when
+        the composition is no longer needed.
+        """
         for system in self.systems:
             await system.close()
 
@@ -190,20 +482,58 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]], AsyncContextMixin):
         messages: Messages,
         extras: dict[str, t.Any] | None = None,
     ) -> CompatMessages:
-        """Build the complete contextual message structure by running all
-        systems.
+        """Execute the complete context building pipeline.
 
-        This method orchestrates the three-phase process:
-        1. For each system, run preprocess → build → postprocess
-        2. Accumulate all built content in the context
-        3. Parse and assemble everything into the final message format
+        Orchestrates the three-phase lifecycle for all systems:
+        1. Sequential Execution: For each system:
+           - Preprocess: System modifies shared context
+           - Build: System generates its contextual data
+           - Store: Built data saved to context[system.__key__]
+           - Postprocess: System reacts to built content
+
+        2. Assembly: After all systems complete:
+           - Parse: Convert each system's data to text
+           - Render: Apply context template to generate system prompt
+           - Combine: Merge system prompt with conversation messages
 
         Args:
-            messages: The input messages from the conversation
-            extras: Additional context data to include
+            messages: Input conversation messages.
+            extras: Additional context data to include. Typically used to provide
+                initial data like user profiles or session information.
 
         Returns:
-            CompatMessages with enriched system prompt containing all context
+            CompatMessages containing the original conversation messages plus
+            an enriched system prompt with all contextual information.
+
+        Example:
+            ```python
+            messages = Messages(
+                messages=[
+                    Message(role="user", content="Recommend a book")
+                ]
+            )
+
+            enriched = await compose.build(
+                messages,
+                extras={
+                    "profile.info": {
+                        "name": "Alice",
+                        "interests": ["sci-fi", "philosophy"],
+                    }
+                },
+            )
+
+            # enriched.system_prompt now contains:
+            # - User profile information
+            # - Knowledge about relevant books
+            # - Any other context from configured systems
+            ```
+
+        Note:
+            The context dictionary accumulates data through the pipeline:
+            - Starts with extras (if provided)
+            - Each system adds its built data under its __key__
+            - Systems can access preceding systems' data via context.context
         """
         messages_ = messages.model_copy()
         context = Context(messages=list(messages_.messages), context=extras or {})
@@ -221,20 +551,27 @@ class ContextCompose(t.Sequence[ContextSystem[t.Any]], AsyncContextMixin):
         return await self.build_final(context)
 
     async def build_final(self, context: Context) -> CompatMessages:
-        """Assemble the final message structure with enriched system prompt.
+        """Assemble final enriched messages with system prompt.
 
-        This method:
-        1. Parses each system's raw built content into string format
-        2. Renders the context template with all parsed content
-        3. Combines the rendered system prompt with the original messages
+        Performs the final assembly phase:
+        1. Parse each system's raw structured data into text
+        2. Render the context template with parsed and raw data
+        3. Combine the system prompt with conversation messages
 
         Args:
-            context: The fully processed context containing all systems' built
-                content
+            context: Fully processed context containing all systems' built data.
 
         Returns:
             CompatMessages with system prompt containing all contextual
-            information
+            information and the original (potentially modified) messages.
+
+        Note:
+            The template receives two dictionaries:
+            - `systems`: Parsed text from each system (via parse())
+            - `raw`: Raw structured data from each system (via build())
+
+            This allows templates to use either formatted text or access
+            raw data for conditional logic or detailed formatting.
         """
         raw = context.context.copy()
         parsed = {sys.__key__: await sys.parse(raw[sys.__key__]) for sys in self.systems}

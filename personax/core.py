@@ -20,15 +20,31 @@ def build_id(
     version: t.Literal["latest"] | str = "latest",
     scenario: t.Literal["default"] | str = "default",
 ) -> str:
-    """Build a unique identifier string for a persona.
+    """Build a unique identifier for a PersonaX instance.
+
+    Constructs a qualified name identifier combining the persona name,
+    version, and scenario. Used for persona registration and lookup in
+    orchestration systems.
+
+    Format: `name[-version][@scenario]`
+    - Version suffix is omitted for "latest"
+    - Scenario suffix is omitted for "default"
 
     Args:
-        name: The base name of the persona
-        version: Version string, defaults to "latest"
-        scenario: Scenario string, defaults to "default"
+        name: Base name of the persona (e.g., "assistant", "persomna").
+        version: Version identifier. Defaults to "latest".
+        scenario: Scenario or use case identifier. Defaults to "default".
 
     Returns:
-        A formatted ID string in the format: name[-version][@scenario]
+        Formatted identifier string.
+
+    Example:
+        ```python
+        build_id("assistant")  # "assistant"
+        build_id("assistant", "v2")  # "assistant-v2"
+        build_id("assistant", "v2", "medical")  # "assistant-v2@medical"
+        build_id("assistant", scenario="s2s")  # "assistant@s2s"
+        ```
     """
     return (
         f"{name}"
@@ -38,6 +54,70 @@ def build_id(
 
 
 class Core(AsyncContextMixin):
+    """Core orchestrator for PersonaX completion pipeline.
+
+    Integrates the three fundamental PersonaX components:
+    1. ContextCompose: Builds enriched context from conversation messages
+    2. CompletionSystem: Generates LLM responses
+    3. Toolset: Provides callable functions for the LLM
+
+    The core execution flow:
+    1. Input messages → ContextCompose → enriched messages with system prompt
+    2. Enriched messages + toolset → CompletionSystem → completion/stream
+
+    This class manages the lifecycle of all components and provides a unified
+    interface for generating completions.
+
+    Attributes:
+        context: Context composition system for building enriched prompts.
+        toolset: Collection of tools available for LLM function calling.
+        completion: Completion system for LLM text generation.
+        model_id: Identifier for this model configuration.
+
+    Args:
+        context: Configured ContextCompose instance.
+        toolset: Iterable of tool instances for function calling.
+        completion: Configured CompletionSystem instance.
+        model_id: Unique identifier for this core configuration.
+
+    Example:
+        ```python
+        # Create core with all components
+        core = Core(
+            context=ContextCompose(
+                ProfileContextSystem(...),
+                KnowledgeContextSystem(...),
+                context_template=Template("..."),
+            ),
+            completion=OpenAICompletion(...),
+            toolset=[GetWeather(), SearchWeb()],
+            model_id="assistant-v1@default",
+        )
+
+        await core.init()
+
+        # Generate completion
+        messages = Messages(messages=[
+            Message(role="user", content="What's the weather in SF?")
+        ])
+
+        completion = await core.complete(
+            messages,
+            extras={"profile.info": {"location": "San Francisco"}}
+        )
+
+        print(completion.message.content)
+
+        await core.close()
+        ```
+
+    Note:
+        - All three components (context, completion, toolset) must be configured
+        - Context enrichment happens before every completion
+        - Toolset is passed to completion for automatic tool calling
+        - model_id is used for completion metadata
+    """
+
     __slots__ = ("completion", "context", "model_id", "toolset")
 
     def __init__(
@@ -54,10 +134,20 @@ class Core(AsyncContextMixin):
         self.model_id = model_id
 
     async def init(self) -> None:
+        """Initialize all core components.
+
+        Initializes the completion system and all context systems in the
+        composition. Must be called before generating completions.
+        """
         await self.completion.init()
         await self.context.init()
 
     async def close(self) -> None:
+        """Close and cleanup all core components.
+
+        Closes the completion system and all context systems, releasing
+        any held resources. Should be called when the core is no longer needed.
+        """
         await self.completion.close()
         await self.context.close()
 
@@ -71,18 +161,43 @@ class Core(AsyncContextMixin):
         prompt_cache_key: str | Unset = UNSET,
         extras: dict[str, t.Any] | None = None,
     ) -> Completion | AsyncStream[CompletionChunk]:
-        """Complete a set of messages.
+        """Generate completion through the full PersonaX pipeline.
+
+        Executes the complete flow:
+        1. Enrich messages with context (ContextCompose.build)
+        2. Generate completion with tools (CompletionSystem.complete)
 
         Args:
-            messages: The input messages to complete.
-            chatcmpl_id: Optional ID for the chat completion.
-            stream: Whether to stream the completion.
-            max_completion_tokens: Maximum tokens for the completion.
-            prompt_cache_key: Optional cache key for the prompt.
-            extras: Additional context extras.
+            messages: Input conversation messages.
+            chatcmpl_id: Optional completion ID for response.
+            stream: Whether to stream the response.
+            max_completion_tokens: Maximum tokens to generate.
+            prompt_cache_key: Optional key for prompt caching.
+            extras: Additional context data (e.g., user profile info).
 
         Returns:
-            A Completion object or an AsyncStream of CompletionChunk objects.
+            Completion object if stream=False, AsyncStream if stream=True.
+
+        Example:
+            ```python
+            # Non-streaming with context extras
+            completion = await core.complete(
+                messages,
+                extras={
+                    "profile.info": {
+                        "prefname": "Alice",
+                        "ip": "123.45.67.89"
+                    }
+                },
+                max_completion_tokens=500,
+            )
+
+            # Streaming
+            stream = await core.complete(messages, stream=True)
+            async for chunk in stream:
+                if chunk.delta.content:
+                    print(chunk.delta.content, end="")
+            ```
         """
         messages = await self.context.build(messages, extras)
         toolset = list(self.toolset)
@@ -98,6 +213,70 @@ class Core(AsyncContextMixin):
 
 
 class PersonaX(AsyncContextMixin):
+    """Base class for PersonaX persona implementations.
+
+    PersonaX provides a high-level abstraction for AI personas, wrapping
+    the Core pipeline with identity management. Each PersonaX instance
+    represents a unique AI model configuration identified by name, version,
+    and scenario.
+
+    Class Variables:
+        name: Base name of the persona (required, must be defined by subclasses).
+        version: Version identifier. Defaults to "latest".
+        scenario: Scenario or use case identifier. Defaults to "default".
+
+    Properties:
+        id: Unique identifier built from name, version, and scenario.
+
+    Attributes:
+        core: The underlying Core instance managing the completion pipeline.
+
+    Example:
+        ```python
+        class Assistant(PersonaX):
+            name = "assistant"
+            version = "v1"
+            scenario = "general"
+
+            def __init__(self, core: Core):
+                super().__init__(core)
+
+
+        # Create persona
+        persona = Assistant(core)
+        print(persona.id)  # "assistant-v1@general"
+
+        await persona.init()
+
+        # Generate completion
+        completion = await persona.complete(messages)
+
+        await persona.close()
+
+
+        # Multiple scenarios
+        class AssistantS2S(PersonaX):
+            name = "assistant"
+            version = "v1"
+            scenario = "s2s"
+
+        class AssistantInquiry(PersonaX):
+            name = "assistant"
+            version = "v1"
+            scenario = "inquiry"
+
+        # Each has unique ID for orchestration
+        print(AssistantS2S(core).id)  # "assistant-v1@s2s"
+        print(AssistantInquiry(core).id)  # "assistant-v1@inquiry"
+        ```
+
+    Note:
+        - Subclasses must define the `name` class variable
+        - PersonaX instances are hashable by their ID
+        - IDs are used for persona registration in orchestration systems
+        - Multiple personas can share the same name with different versions/scenarios
+    """
+
     core: Core
 
     name: t.ClassVar[str]
@@ -106,9 +285,19 @@ class PersonaX(AsyncContextMixin):
 
     @classproperty
     def id(self) -> str:
+        """Get the unique identifier for this persona.
+
+        Returns:
+            Formatted ID string combining name, version, and scenario.
+        """
         return build_id(self.name, self.version, self.scenario)
 
     def __init_subclass__(cls, **kwargs: t.Any) -> None:
+        """Validate that subclasses define required class variables.
+
+        Raises:
+            NotImplementedError: If `name` is not defined or is not a string.
+        """
         super().__init_subclass__(**kwargs)
 
         if not hasattr(cls, "name") or not isinstance(cls.name, str):
@@ -124,15 +313,22 @@ class PersonaX(AsyncContextMixin):
         )
 
     def __hash__(self) -> int:
+        """Hash persona by ID for use in sets/dicts.
+
+        Returns:
+            Hash of the persona ID.
+        """
         return hash(self.id)
 
     def __init__(self, core: Core) -> None:
         self.core = core
 
     async def init(self) -> None:
+        """Initialize the underlying core components."""
         await self.core.init()
 
     async def close(self) -> None:
+        """Close and cleanup the underlying core components."""
         await self.core.close()
 
     async def complete(
@@ -145,6 +341,21 @@ class PersonaX(AsyncContextMixin):
         prompt_cache_key: str | Unset = UNSET,
         extras: dict[str, t.Any] | None = None,
     ) -> Completion | AsyncStream[CompletionChunk]:
+        """Generate completion using this persona.
+
+        Delegates to the underlying core's complete method.
+
+        Args:
+            messages: Input conversation messages.
+            chatcmpl_id: Optional completion ID for response.
+            stream: Whether to stream the response.
+            max_completion_tokens: Maximum tokens to generate.
+            prompt_cache_key: Optional key for prompt caching.
+            extras: Additional context data.
+
+        Returns:
+            Completion object if stream=False, AsyncStream if stream=True.
+        """
         return await self.core.complete(
             messages=messages,
             chatcmpl_id=chatcmpl_id,

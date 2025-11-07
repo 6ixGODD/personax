@@ -23,5 +23,5 @@ class ResourceError(PersonaXError):
     """Exception raised for resource-related errors."""
 
 
-class RESTResourceError(ResourceError):
+class RESTError(ResourceError):
     """Exception raised for REST resource-related errors."""
