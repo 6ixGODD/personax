@@ -8,6 +8,33 @@ from personax.types import BaseModel
 from personax.types import BaseSchema
 
 
+class URLSpec(BaseSchema):
+    """Specification for a URL with optional metadata.
+
+    Attributes:
+        url: The URL string.
+        metadata: Optional dictionary of additional metadata related to the URL.
+
+    Example:
+        ```python
+        url_spec = URLSpec(
+            url="https://example.com/image.jpg",
+            metadata={"description": "Sample image"}
+        )
+        ```
+    """
+
+    __slots__ = ("url", "metadata")
+
+    def __init__(
+        self,
+        *,
+        url: str,
+        metadata: dict[str, t.Any] | None = None,
+    ) -> None:
+        self.url = url
+        self.metadata = metadata
+
 class Message(BaseSchema):
     """Individual message in a conversation.
 
@@ -52,7 +79,7 @@ class Message(BaseSchema):
         *,
         role: t.Literal["system", "user", "assistant"],
         content: str | None,
-        image: bytes | None = None,
+        image: bytes | URLSpec | None = None,
     ) -> None:
         super().__init__()
         self.role = role

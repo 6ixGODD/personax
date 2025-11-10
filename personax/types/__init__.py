@@ -7,9 +7,17 @@ import pydantic as pydt
 
 
 class BaseSchema:
+    """A base class for schema objects that supports serialization to and from
+    dictionaries."""
+
     __slots__ = ()  # type: t.Collection[str]
 
     def dumps(self) -> dict[str, object]:
+        """Serialize the object to a dictionary.
+
+        Returns:
+            A dictionary representation of the object.
+        """
         return {slot: self._dumps(getattr(self, slot, None)) for slot in self.__slots__}
 
     def _dumps(self, v: object, /) -> object:
@@ -21,13 +29,22 @@ class BaseSchema:
 
     @classmethod
     def from_dict(cls, data: dict[str, object]) -> t.Self:
-        obj = cls.__new__(cls)  # 不调用 __init__
+        """Deserialize a dictionary to an object of this class.
+
+        Args:
+            data: A dictionary representation of the object.
+
+        Returns:
+            An instance of the class.
+        """
+        obj = cls.__new__(cls)  # Use __new__ to avoid calling __init__
         for slot in cls.__slots__:
             value = data.get(slot)
             setattr(obj, slot, value)
         return obj
 
     def __eq__(self, other: object, /) -> bool:
+        """Check equality with another object."""
         if not isinstance(other, self.__class__):
             return False
         return all(
@@ -40,10 +57,14 @@ class BaseSchema:
 
     __str__ = __repr__
 
-    def __getstate__(self) -> tuple[object, ...]:  # for pickle optimization
+    def __getstate__(self) -> tuple[object, ...]:
+        """Get the state of the object for serialization. For use with
+        pickle."""
         return tuple(getattr(self, slot, None) for slot in self.__slots__)
 
-    def __setstate__(self, state: tuple[object, ...]) -> None:  # for pickle optimization
+    def __setstate__(self, state: tuple[object, ...]) -> None:
+        """Set the state of the object from serialization. For use with
+        pickle."""
         for slot, value in zip(self.__slots__, state, strict=True):
             setattr(self, slot, value)
 
@@ -60,4 +81,4 @@ class BaseModel(pydt.BaseModel):
     )
 
 
-PathLikes: t.TypeAlias = str | os.PathLike[str]
+PathLikes: t.TypeAlias = str | os.PathLike[str]  # Type alias for path-like objects
