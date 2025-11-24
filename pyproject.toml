@@ -1,43 +1,53 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [ "poetry-core>=2,<3" ]
+
 [project]
 name = "personax"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "BoChenSHEN",email = "6goddddddd@gmail.com"}
-]
 readme = "README.md"
+authors = [
+  { name = "BoChenSHEN", email = "6goddddddd@gmail.com" },
+]
 requires-python = ">=3.11,<3.13"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
 dependencies = [
-    "pydantic (>=2.12.0,<3.0.0)",
-    "typing-extensions (>=4.15.0,<5.0.0)",
-    "jinja2 (>=3.1.6,<4.0.0)",
-    "watchdog (>=6.0.0,<7.0.0)",
-    "tenacity (>=9.1.2,<10.0.0)",
-    "openai (>=2.3.0,<3.0.0)",
-    "json5 (>=0.12.1,<0.13.0)",
-    "httpx (>=0.28.1,<0.29.0)",
-    "cachetools (>=6.2.0,<7.0.0)",
-    "async-lru (>=2.0.5,<3.0.0)",
-    "tzdata (>=2025.2,<2026.0)",
+  "async-lru>=2.0.5,<3",
+  "cachetools>=6.2,<7",
+  "httpx>=0.28.1,<0.29",
+  "jinja2>=3.1.6,<4",
+  "json5>=0.12.1,<0.13",
+  "openai>=2.3,<3",
+  "pydantic>=2.12,<3",
+  "tenacity>=9.1.2,<10",
+  "typing-extensions>=4.15,<5",
+  "tzdata>=2025.2,<2026",
+  "watchdog>=6,<7",
 ]
 
-
-[project.optional-dependencies]
-dev = [
-    "ruff (>=0.14.1,<0.15.0)",
-    "pre-commit (>=4.3.0,<5.0.0)",
+optional-dependencies.dev = [
+  "pre-commit>=4.3,<5",
+  "ruff>=0.14.1,<0.15",
 ]
-test = [
-    "mypy (>=1.18.2,<2.0.0)",
-    "pylint (>=3.3.9,<5.0.0)",
-    "pytest (>=8.4.2,<9.0.0)",
-    "pytest-asyncio (>=1.2.0,<2.0.0)",
-    "pytest-cov (>=7.0.0,<8.0.0)",
-    "pytest-mock (>=3.15.1,<4.0.0)",
-    "types-cachetools (>=6.2.0.20250827,<7.0.0.0)",
-    "ruff (>=0.14.1,<0.15.0)"
+optional-dependencies.docs = [
+  "mkdocs>=1.6.1,<2",
+  "mkdocs-material>=9.7,<10",
+  "mkdocs-minify-plugin>=0.8,<0.9",
+  "mkdocstrings[python]>=0.30.1,<0.31",
+  "pymdown-extensions>=10.17.1,<11",
 ]
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+optional-dependencies.test = [
+  "mypy>=1.18.2,<2",
+  "pylint>=3.3.9,<5",
+  "pytest>=8.4.2,<9",
+  "pytest-asyncio>=1.2,<2",
+  "pytest-cov>=7,<8",
+  "pytest-mock>=3.15.1,<4",
+  "ruff>=0.14.1,<0.15",
+  "types-cachetools>=6.2.0.20250827,<7",
+]
