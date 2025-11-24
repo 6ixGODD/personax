@@ -1,6 +1,6 @@
-# Types
+# Stream Types
 
-::: personax.types
+::: personax.types.stream
 options:
 show_root_heading: true
 show_source: true

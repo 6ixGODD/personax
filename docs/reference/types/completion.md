@@ -1,6 +1,6 @@
-# Types
+# Completion Types
 
-::: personax.types
+::: personax.types.completion
 options:
 show_root_heading: true
 show_source: true

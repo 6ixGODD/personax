@@ -1,6 +1,6 @@
-# Types
+# Message Types
 
-::: personax.types
+::: personax.types.message
 options:
 show_root_heading: true
 show_source: true

@@ -1,6 +1,6 @@
-# Types
+# OpenAI-Compat Message Types
 
-::: personax.types
+::: personax.types.compat.message
 options:
 show_root_heading: true
 show_source: true

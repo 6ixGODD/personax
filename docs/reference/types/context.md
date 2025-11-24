@@ -1,6 +1,6 @@
-# Types
+# Context Types
 
-::: personax.types
+::: personax.types.context
 options:
 show_root_heading: true
 show_source: true

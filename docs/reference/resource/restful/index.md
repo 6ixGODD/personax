@@ -1,6 +1,6 @@
-# Types
+# RESTful Resource
 
-::: personax.types
+::: personax.resource.restful
 options:
 show_root_heading: true
 show_source: true

@@ -1,6 +1,6 @@
-# Types
+# Amap Weather Info Service
 
-::: personax.types
+::: personax.resource.restful.weather.amap
 options:
 show_root_heading: true
 show_source: true

@@ -1,6 +1,6 @@
-# Types
+# Completion Chunk Types
 
-::: personax.types
+::: personax.types.completion_chunk
 options:
 show_root_heading: true
 show_source: true

@@ -1,6 +1,6 @@
-# Types
+# Baidu IP Location Service
 
-::: personax.types
+::: personax.resource.restful.ip.baidu
 options:
 show_root_heading: true
 show_source: true

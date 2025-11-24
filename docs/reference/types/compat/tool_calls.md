@@ -1,6 +1,6 @@
-# Types
+# OpenAI-Compat Tool-Calls Types
 
-::: personax.types
+::: personax.types.compat.tool_calls
 options:
 show_root_heading: true
 show_source: true

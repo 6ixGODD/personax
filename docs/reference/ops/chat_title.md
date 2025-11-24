@@ -1,6 +1,6 @@
-# Types
+# Chat Title 
 
-::: personax.types
+::: personax.ops.chat_title
 options:
 show_root_heading: true
 show_source: true

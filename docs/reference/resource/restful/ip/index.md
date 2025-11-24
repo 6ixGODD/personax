@@ -1,6 +1,6 @@
-# Types
+# IP Location Service
 
-::: personax.types
+::: personax.resource.restful.ip
 options:
 show_root_heading: true
 show_source: true
