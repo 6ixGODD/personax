@@ -7,7 +7,7 @@ import typing_extensions as te
 
 from personax.exceptions import RESTError
 from personax.exceptions import ToolCallError
-from personax.resources.restful.weather import WeatherInfoService
+from personax.resource.restful.weather import WeatherInfoService
 from personax.tools import BaseTool
 from personax.tools import Property
 
