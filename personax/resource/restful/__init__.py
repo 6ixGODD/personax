@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import abc
 import typing as t
 
 import httpx
-import pydantic as pydt
+import pydantic as pyd
 import tenacity
 
 from personax.utils import AsyncContextMixin
 
-RespT = t.TypeVar("RespT", bound=pydt.BaseModel)
+RespT = t.TypeVar("RespT", bound=pyd.BaseModel)
 
 
 class BearerAuth(httpx.Auth):
@@ -38,7 +37,7 @@ class BearerAuth(httpx.Auth):
         yield request
 
 
-class RESTfulService(AsyncContextMixin, abc.ABC):
+class RESTfulMixin(AsyncContextMixin):
     """Abstract base class for RESTful API service clients.
 
     Provides a high-level interface for making HTTP requests to RESTful APIs

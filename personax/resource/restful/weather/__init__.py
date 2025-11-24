@@ -4,7 +4,7 @@ import abc
 
 import typing_extensions as te
 
-from personax.resources.restful import RESTfulService
+from personax.resource.restful import RESTfulMixin
 
 
 class WeatherInfo(te.TypedDict, total=False):
@@ -35,7 +35,7 @@ class WeatherInfo(te.TypedDict, total=False):
     """Timestamp when weather data was reported."""
 
 
-class WeatherInfoService(RESTfulService):
+class WeatherInfoService(RESTfulMixin, abc.ABC):
     """Abstract base class for weather information services.
 
     Defines the interface for weather data providers. Implementations

@@ -4,7 +4,7 @@ import abc
 
 import typing_extensions as te
 
-from personax.resources.restful import RESTfulService
+from personax.resource.restful import RESTfulMixin
 
 
 class Location(te.TypedDict):
@@ -20,7 +20,7 @@ class Location(te.TypedDict):
     """Administrative division code for the location."""
 
 
-class IpLocationService(RESTfulService):
+class IpLocationService(RESTfulMixin, abc.ABC):
     """Abstract base class for IP geolocation services.
 
     Defines the interface for IP-to-location lookup services. Implementations

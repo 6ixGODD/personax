@@ -9,8 +9,8 @@ import pydantic as pydt
 import typing_extensions as te
 
 from personax.exceptions import RESTError
-from personax.resources.restful.ip import IpLocationService
-from personax.resources.restful.ip import Location
+from personax.resource.restful.ip import IpLocationService
+from personax.resource.restful.ip import Location
 
 logger = logging.getLogger("personax.resources.rest.ip.baidu")
 

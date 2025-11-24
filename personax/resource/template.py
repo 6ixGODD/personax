@@ -6,8 +6,8 @@ import typing as t
 import jinja2 as j2
 
 from personax.exceptions import ResourceError
-from personax.resources import Resource
-from personax.resources import WatchedResource
+from personax.resource import Resource
+from personax.resource import WatchedResource
 
 logger = logging.getLogger("personax.resources.template")
 

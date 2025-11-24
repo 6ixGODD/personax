@@ -7,8 +7,8 @@ import pydantic as pydt
 import typing_extensions as te
 
 from personax.exceptions import RESTError
-from personax.resources.restful.weather import WeatherInfo
-from personax.resources.restful.weather import WeatherInfoService
+from personax.resource.restful.weather import WeatherInfo
+from personax.resource.restful.weather import WeatherInfoService
 
 logger = logging.getLogger("personax.resources.rest.weather.amap")
 
