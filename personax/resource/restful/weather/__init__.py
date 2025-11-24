@@ -17,7 +17,8 @@ class WeatherInfo(te.TypedDict, total=False):
     """Human-readable location address."""
 
     condition: te.Required[str]
-    """Current weather condition description (e.g., "Sunny", "Rainy")."""
+    """Current weather condition description (e.g., "Sunny",
+    "Rainy")."""
 
     temperature: te.Required[str]
     """Current temperature in Celsius."""

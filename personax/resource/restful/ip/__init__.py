@@ -10,7 +10,8 @@ from personax.resource.restful import RESTfulMixin
 class Location(te.TypedDict):
     """Geographic location data structure.
 
-    Contains location information derived from IP address or other sources.
+    Contains location information derived from IP address or other
+    sources.
     """
 
     address: str

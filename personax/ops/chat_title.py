@@ -10,4 +10,4 @@ class ChatTitle:
         self.completion = completion
         self.prompt = prompt
 
-    async def gen(self, context: Message):
+    async def gen(self, context: Message): ...

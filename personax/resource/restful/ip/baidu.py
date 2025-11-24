@@ -19,10 +19,10 @@ class BaiduLocationParams(te.TypedDict):
     """Request parameters for Baidu IP Location API."""
 
     ip: str
-    """IP address to locate"""
+    """IP address to locate."""
 
     ak: str
-    """Baidu API Access Key"""
+    """Baidu API Access Key."""
 
     coor: str
     """Coordinate type, e.g., 'gcj02' for GCJ-02 coordinates (Mars
@@ -33,35 +33,35 @@ class BaiduLocationAddressDetail(te.TypedDict):
     """Detailed address components from Baidu location response."""
 
     adcode: str
-    """Administrative division code"""
+    """Administrative division code."""
 
     city: str
-    """City name"""
+    """City name."""
 
     city_code: int
-    """City code"""
+    """City code."""
 
     district: str
-    """District name"""
+    """District name."""
 
     province: str
-    """Province name"""
+    """Province name."""
 
     street: str
-    """Street name"""
+    """Street name."""
 
     street_number: str
-    """Street number"""
+    """Street number."""
 
 
 class BaiduLocationContent(te.TypedDict):
     """Location content from Baidu API response."""
 
     address: str
-    """Formatted address"""
+    """Formatted address."""
 
     address_detail: BaiduLocationAddressDetail
-    """Detailed address components"""
+    """Detailed address components."""
 
     point: dict[str, t.Any]
     """Geographical coordinates (latitude and longitude)"""
@@ -71,16 +71,16 @@ class BaiduLocation(pydt.BaseModel):
     """Baidu IP Location API response model."""
 
     status: int
-    """Response status code, 0 indicates success"""
+    """Response status code, 0 indicates success."""
 
     message: str | None = None
-    """Response message, present when status is not 0"""
+    """Response message, present when status is not 0."""
 
     address: str
-    """Queried IP address"""
+    """Queried IP address."""
 
     content: BaiduLocationContent
-    """Location content including address and coordinates"""
+    """Location content including address and coordinates."""
 
 
 class BaiduIpLocationService(IpLocationService):
@@ -122,6 +122,7 @@ class BaiduIpLocationService(IpLocationService):
         - Returns Chinese addresses for Chinese IPs
         - Uses GCJ-02 coordinate system
     """
+
     def __init__(
         self,
         ak: str,

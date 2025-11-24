@@ -16,6 +16,7 @@ class BaseModel(pyd.BaseModel):
     Attributes:
         model_config: Configuration dictionary for the model.
     """
+
     model_config: t.ClassVar[pyd.ConfigDict] = pyd.ConfigDict(
         validate_assignment=True,  # Validate on assignment
         validate_default=False,  # Do not validate default values

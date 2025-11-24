@@ -42,7 +42,11 @@ def build_id(
         ```python
         build_id("assistant")  # "assistant"
         build_id("assistant", "v2")  # "assistant-v2"
-        build_id("assistant", "v2", "medical")  # "assistant-v2@medical"
+        build_id(
+            "assistant",
+            "v2",
+            "medical",
+        )  # "assistant-v2@medical"
         build_id("assistant", scenario="s2s")  # "assistant@s2s"
         ```
     """
@@ -97,13 +101,17 @@ class Core(AsyncContextMixin):
         await core.init()
 
         # Generate completion
-        messages = Messages(messages=[
-            Message(role="user", content="What's the weather in SF?")
-        ])
+        messages = Messages(
+            messages=[
+                Message(
+                    role="user", content="What's the weather in SF?"
+                )
+            ]
+        )
 
         completion = await core.complete(
             messages,
-            extras={"profile.info": {"location": "San Francisco"}}
+            extras={"profile.info": {"location": "San Francisco"}},
         )
 
         print(completion.message.content)
@@ -146,7 +154,8 @@ class Core(AsyncContextMixin):
         """Close and cleanup all core components.
 
         Closes the completion system and all context systems, releasing
-        any held resources. Should be called when the core is no longer needed.
+        any held resources. Should be called when the core is no longer
+        needed.
         """
         await self.completion.close()
         await self.context.close()
@@ -186,7 +195,7 @@ class Core(AsyncContextMixin):
                 extras={
                     "profile.info": {
                         "prefname": "Alice",
-                        "ip": "123.45.67.89"
+                        "ip": "123.45.67.89",
                     }
                 },
                 max_completion_tokens=500,
@@ -260,10 +269,12 @@ class PersonaX(AsyncContextMixin):
             version = "v1"
             scenario = "s2s"
 
+
         class AssistantInquiry(PersonaX):
             name = "assistant"
             version = "v1"
             scenario = "inquiry"
+
 
         # Each has unique ID for orchestration
         print(AssistantS2S(core).id)  # "assistant-v1@s2s"

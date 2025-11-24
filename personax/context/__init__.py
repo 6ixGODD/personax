@@ -15,7 +15,8 @@ BuiltT = t.TypeVar("BuiltT", bound=_Mapping)
 
 
 class ContextSystem(AsyncContextMixin, abc.ABC, t.Generic[BuiltT]):
-    """Abstract base class for context components in conversational AI systems.
+    """Abstract base class for context components in conversational AI
+    systems.
 
     A ContextSystem represents a single source or processor of contextual
     information that enriches LLM prompts. Examples include knowledge retrieval
@@ -263,7 +264,8 @@ class ContextSystem(AsyncContextMixin, abc.ABC, t.Generic[BuiltT]):
 
     @t.overload
     async def build(self, context: Context) -> BuiltT:
-        """Build from full Context object for LLM message preparation."""
+        """Build from full Context object for LLM message
+        preparation."""
 
     @t.overload
     async def build(self, context: str) -> BuiltT:
@@ -322,7 +324,8 @@ class ContextSystem(AsyncContextMixin, abc.ABC, t.Generic[BuiltT]):
 
 
 class ContextCompose(AsyncContextMixin, t.Sequence[ContextSystem[t.Any]]):
-    """Orchestrator for composing multiple ContextSystems into a unified pipeline.
+    """Orchestrator for composing multiple ContextSystems into a unified
+    pipeline.
 
     ContextCompose manages the sequential execution of multiple context systems,
     coordinating their three-phase lifecycle (preprocess → build → postprocess)

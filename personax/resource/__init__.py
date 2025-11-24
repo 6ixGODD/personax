@@ -81,7 +81,9 @@ class Resource(abc.ABC, t.Generic[T]):
         class ConfigResource(Resource[dict]):
             def _parse(self) -> dict:
                 import json
+
                 return json.loads(self.fpath.read_text())
+
 
         config = ConfigResource("config.json")
         print(config.data["api_key"])
@@ -112,9 +114,9 @@ class Resource(abc.ABC, t.Generic[T]):
     def load(self) -> None:
         """Load and parse the resource file.
 
-        Attempts to parse the file using _parse(). On success, updates data and
-        creates a backup. On failure, restores from backup if available and
-        logs the error.
+        Attempts to parse the file using _parse(). On success, updates
+        data and creates a backup. On failure, restores from backup if
+        available and logs the error.
 
         Thread-safe via internal lock.
         """
@@ -156,7 +158,9 @@ class WatchedResource(Resource[T], abc.ABC):
         class WatchedConfig(WatchedResource[dict]):
             def _parse(self) -> dict:
                 import json
+
                 return json.loads(self.fpath.read_text())
+
 
         config = WatchedConfig("config.json")
         # Modify config.json externally

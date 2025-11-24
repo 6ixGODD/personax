@@ -73,8 +73,8 @@ class PropertySchema(pydt.BaseModel):
 class ParameterSchema(pydt.BaseModel):
     """Schema for tool function parameters.
 
-    Defines the complete parameter structure for a tool function, including all
-    parameters and their constraints.
+    Defines the complete parameter structure for a tool function,
+    including all parameters and their constraints.
     """
 
     type: t.Literal["object"] = "object"
@@ -90,8 +90,8 @@ class ParameterSchema(pydt.BaseModel):
 class FunctionSchema(pydt.BaseModel):
     """Schema for a tool function definition.
 
-    Represents the complete specification of a function that can be called by
-    an LLM, including its name, description, and parameters.
+    Represents the complete specification of a function that can be
+    called by an LLM, including its name, description, and parameters.
     """
 
     name: t.Annotated[
@@ -163,20 +163,22 @@ class Property:
                     str,
                     Property(
                         description="City name or coordinates",
-                        examples=["San Francisco", "40.7128,-74.0060"],
+                        examples=[
+                            "San Francisco",
+                            "40.7128,-74.0060",
+                        ],
                         min_length=1,
                         max_length=100,
-                    )
+                    ),
                 ],
                 unit: t.Annotated[
                     t.Literal["celsius", "fahrenheit"],
                     Property(
                         description="Temperature unit",
                         default="celsius",
-                    )
+                    ),
                 ] = "celsius",
-            ) -> Weather:
-                ...
+            ) -> Weather: ...
         ```
     """
 
@@ -394,7 +396,7 @@ class BaseTool(t.Generic[P, R], abc.ABC):
                         description="First number",
                         minimum=0,
                         maximum=1000,
-                    )
+                    ),
                 ],
                 b: t.Annotated[
                     int,
@@ -402,7 +404,7 @@ class BaseTool(t.Generic[P, R], abc.ABC):
                         description="Second number",
                         minimum=0,
                         maximum=1000,
-                    )
+                    ),
                 ],
             ) -> str:
                 return str(a + b)
@@ -427,7 +429,9 @@ class BaseTool(t.Generic[P, R], abc.ABC):
 
         # Complex example with multiple parameter types
         class SearchDatabase(BaseTool):
-            __function_description__ = "Search database with filters"
+            __function_description__ = (
+                "Search database with filters"
+            )
 
             def __init__(self, db_client):
                 self.db = db_client
@@ -441,7 +445,7 @@ class BaseTool(t.Generic[P, R], abc.ABC):
                         min_length=1,
                         max_length=200,
                         examples=["user:john", "status:active"],
-                    )
+                    ),
                 ],
                 limit: t.Annotated[
                     int,
@@ -450,14 +454,14 @@ class BaseTool(t.Generic[P, R], abc.ABC):
                         minimum=1,
                         maximum=100,
                         default=10,
-                    )
+                    ),
                 ] = 10,
                 fields: t.Annotated[
                     list[str] | None,
                     Property(
                         description="Fields to return",
                         examples=[["name", "email"]],
-                    )
+                    ),
                 ] = None,
             ) -> list[dict[str, t.Any]]:
                 return await self.db.search(query, limit, fields)
@@ -519,8 +523,8 @@ class BaseTool(t.Generic[P, R], abc.ABC):
 
         Example:
             ```python
-            class GetUserProfile(BaseTool):
-                ...
+            class GetUserProfile(BaseTool): ...
+
 
             tool = GetUserProfile()
             print(tool.__function_name__)  # "get_user_profile"
@@ -547,7 +551,9 @@ class BaseTool(t.Generic[P, R], abc.ABC):
             schema = tool.schema
 
             print(schema.function.name)  # "get_weather"
-            print(schema.function.description)  # "Get weather for location"
+            print(
+                schema.function.description
+            )  # "Get weather for location"
             print(schema.function.parameters.required)  # ["location"]
             ```
         """

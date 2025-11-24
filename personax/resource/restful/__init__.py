@@ -89,6 +89,7 @@ class RESTfulMixin(AsyncContextMixin):
             print(item.name)
         ```
     """
+
     def __init__(
         self,
         base_url: str,
@@ -122,7 +123,8 @@ class RESTfulMixin(AsyncContextMixin):
         max_retries: int = 3,
         retry_wait: float = 2.0,
     ) -> RespT:
-        """Make an HTTP request with automatic retry and response validation.
+        """Make an HTTP request with automatic retry and response
+        validation.
 
         Sends an HTTP request to the specified endpoint and parses the response
         into the specified Pydantic model. Automatically retries on failure and
@@ -162,6 +164,7 @@ class RESTfulMixin(AsyncContextMixin):
             )
             ```
         """
+
         @tenacity.retry(
             stop=tenacity.stop_after_attempt(max_retries),
             wait=tenacity.wait_fixed(retry_wait),

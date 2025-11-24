@@ -21,8 +21,8 @@ class ProfileContext(te.TypedDict):
     """User profile context with timestamp and location information.
 
     Contains user session metadata including preferred name, IP-based
-    geolocation, timezone, and platform information. Used as the standard
-    profile structure for PersonaX-based systems.
+    geolocation, timezone, and platform information. Used as the
+    standard profile structure for PersonaX-based systems.
     """
 
     prefname: str | None
@@ -53,9 +53,9 @@ class ProfileContext(te.TypedDict):
 class Info(te.TypedDict, total=False):
     """User information input for profile context building.
 
-    Defines the expected user data structure that should be provided
-    in the context dictionary under ProfileContextSystem.__infokey__.
-    All fields are optional.
+    Defines the expected user data structure that should be provided in
+    the context dictionary under ProfileContextSystem.__infokey__. All
+    fields are optional.
     """
 
     prefname: str
@@ -97,7 +97,9 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
 
     Example:
         ```python
-        from personax.resources.restful.ip.baidu import BaiduIpLocationService
+        from personax.resources.restful.ip.baidu import (
+            BaiduIpLocationService,
+        )
 
         profile_system = ProfileContextSystem(
             ip_service=BaiduIpLocationService(ak="YOUR_KEY"),
@@ -222,7 +224,8 @@ class ProfileContextSystem(ContextSystem[ProfileContext]):
         )
 
     async def parse(self, built: ProfileContext) -> str:
-        """Format profile context into text using the configured template.
+        """Format profile context into text using the configured
+        template.
 
         Args:
             built: Profile context from build().

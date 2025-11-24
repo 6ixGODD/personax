@@ -17,10 +17,10 @@ class AmapWeatherInfoParams(te.TypedDict):
     """Request parameters for Amap Weather API."""
 
     key: str
-    """API key for Amap Weather Service"""
+    """API key for Amap Weather Service."""
 
     city: str
-    """Adcode of the city, e.g., '110000' for Beijing"""
+    """Adcode of the city, e.g., '110000' for Beijing."""
 
     extensions: t.Literal["base"]
     """Type of weather data: 'base' for current weather"""
@@ -33,31 +33,31 @@ class AmapWeatherInfoLives(te.TypedDict):
     """Live weather data from Amap API response."""
 
     province: str
-    """Province name"""
+    """Province name."""
 
     city: str
-    """City name"""
+    """City name."""
 
     adcode: str
-    """Adcode of the city"""
+    """Adcode of the city."""
 
     weather: str
-    """Weather description"""
+    """Weather description."""
 
     temperature: str
-    """Temperature in Celsius"""
+    """Temperature in Celsius."""
 
     winddirection: str
-    """Wind direction in degrees"""
+    """Wind direction in degrees."""
 
     windpower: str
-    """Wind power level"""
+    """Wind power level."""
 
     humidity: str
-    """Humidity percentage"""
+    """Humidity percentage."""
 
     reporttime: str
-    """Report time in ISO 8601 format"""
+    """Report time in ISO 8601 format."""
 
 
 class AmapWeatherInfo(pydt.BaseModel):

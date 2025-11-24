@@ -842,7 +842,8 @@ class OpenAICompletion(CompletionSystem):
         created: int,
         model: str,
     ) -> AsyncStream[CompletionChunk]:
-        """Parse OpenAI stream chunks into standardized CompletionChunks."""
+        """Parse OpenAI stream chunks into standardized
+        CompletionChunks."""
         logger.debug("Parsing stream with chatcmpl_id=%s, model=%s", chatcmpl_id, model)
 
         async def _gen() -> t.AsyncGenerator[CompletionChunk, None]:

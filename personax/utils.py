@@ -47,7 +47,8 @@ def singleton(cls: type[_C]) -> t.Callable[..., _C]:
 
 
 class classproperty(property):  # noqa: N801
-    """A descriptor that behaves like a property but is accessed on the class.
+    """A descriptor that behaves like a property but is accessed on the
+    class.
 
     This class allows defining properties that can be accessed directly on
     the class rather than on instances of the class. It is useful for
@@ -62,9 +63,11 @@ class classproperty(property):  # noqa: N801
             def value(cls):
                 return cls._value
 
+
         print(MyClass.value)  # Outputs: 42
         ```
     """
+
     def __get__(self, __instance: t.Any, __owner: type | None = None) -> t.Any:
         if not callable(self.fget):
             raise TypeError("fget must be callable")
@@ -79,10 +82,9 @@ def _get_func_params(fn: t.Callable[..., t.Any]) -> set[str]:
 def filter_kwargs(
     fn: t.Callable[..., t.Any], kwargs: dict[str, t.Any], pref: str = ""
 ) -> dict[str, t.Any]:
-    """
-    Filter out invalid keyword arguments for a given function by comparing
-    the provided keyword arguments to the function's signature. Only valid
-    keyword arguments are returned.
+    """Filter out invalid keyword arguments for a given function by
+    comparing the provided keyword arguments to the function's
+    signature. Only valid keyword arguments are returned.
 
     Args:
         fn: The function to filter keyword arguments for.
@@ -143,8 +145,8 @@ def flatten_dict(
     sep: str = ".",
     _parent: str = "",
 ) -> dict[str, t.Any]:
-    """Flatten a nested dictionary into a single-level dictionary
-    with keys representing the path to each value.
+    """Flatten a nested dictionary into a single-level dictionary with
+    keys representing the path to each value.
 
     Args:
         _dict: The nested dictionary to flatten.
@@ -180,6 +182,7 @@ class AsyncContextMixin:
                 pass
         ```
     """
+
     async def init(self) -> None: ...
     async def close(self) -> None: ...
 
