@@ -1,4 +1,4 @@
-# Chat Title 
+# Chat Title
 
 ::: personax.ops.chat_title
 options:

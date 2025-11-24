@@ -1,41 +1,40 @@
 # PersonaX Framework Configuration
 # Copy this file to .config.yml and fill in your actual credentials
-
 # LLM Configuration
 llm:
-  base_url: "https://baseurl-of-your-llm-service"  # Replace with your LLM service base URL
-  api_key: "your-api-key-here"  # Replace with your actual API key
-  model: "your-model-name-here"  # Replace with your desired model name
-
+  base_url: "https://baseurl-of-your-llm-service" # Replace with your LLM service base URL
+  api_key: "your-api-key-here" # Replace with your actual API key
+  model: "your-model-name-here" # Replace with your desired model name
 # User Profile Settings
+
 user:
   prefname: "Alex"
-  ip: "111.206.214.37"  # User's IP address for location detection
+  ip: "111.206.214.37" # User's IP address for location detection
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
   platform: "Windows 11"
-
 # External Services
+
 services:
   # Baidu IP Location Service
   baidu_ip:
-    ak: "your-baidu-ak-here"  # Replace with your Baidu API key
-
+    ak: "your-baidu-ak-here" # Replace with your Baidu API key
   # Amap Weather Service
-  amap_weather:
-    key: "your-amap-key-here"  # Replace with your Amap API key
 
+  amap_weather:
+    key: "your-amap-key-here" # Replace with your Amap API key
 # Template Paths
+
 templates:
   main: "../../prompts/main.j2"
   profile: "../../prompts/profile.j2"
-
 # Persona Settings
+
 persona:
   name: "WeatherBuddy"
   version: "1.0"
   scenario: "friendly-assistant"
-
 # Chat Interface Settings
+
 chat:
-  streaming_mode: true  # Enable/disable streaming by default
-  show_spinner: true    # Show loading spinner in non-streaming mode
+  streaming_mode: true # Enable/disable streaming by default
+  show_spinner: true # Show loading spinner in non-streaming mode
