@@ -113,6 +113,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
         Returns:
             New stream containing only items matching predicate.
         """
+
         async def filtered_source() -> t.AsyncIterator[_T]:
             async for item in self:
                 if predicate(item):
@@ -129,6 +130,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
         Returns:
             New stream with same items, action called on each.
         """
+
         async def tap_source() -> t.AsyncIterator[_T]:
             async for item in self:
                 action(item)
@@ -145,6 +147,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
         Returns:
             New stream with transformed items.
         """
+
         async def mapped_source() -> t.AsyncIterator[_U]:
             async for item in self:
                 yield mapper(item)
@@ -160,6 +163,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
         Returns:
             New stream with at most n items.
         """
+
         async def take_source() -> t.AsyncIterator[_T]:
             count = 0
             async for item in self:
@@ -179,6 +183,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
         Returns:
             New stream starting after n items.
         """
+
         async def skip_source() -> t.AsyncIterator[_T]:
             count = 0
             async for item in self:
@@ -198,6 +203,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
         Returns:
             New stream emitting lists of items.
         """
+
         async def chunk_source() -> t.AsyncIterator[list[_T]]:
             batch = []
             async for item in self:
@@ -219,6 +225,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
         Returns:
             New stream ending when predicate first returns False.
         """
+
         async def take_while_source() -> t.AsyncIterator[_T]:
             async for item in self:
                 if not predicate(item):
@@ -236,6 +243,7 @@ class AsyncStream(t.AsyncIterable[_T], t.Generic[_T]):
         Returns:
             New stream emitting (index, item) tuples.
         """
+
         async def enumerate_source() -> t.AsyncIterator[tuple[int, _T]]:
             index = start
             async for item in self:

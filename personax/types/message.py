@@ -5,10 +5,9 @@ import typing as t
 import pydantic as pydt
 
 from personax.types import BaseModel
-from personax.types import BaseSchema
 
 
-class URLSpec(BaseSchema):
+class URLSpec:
     """Specification for a URL with optional metadata.
 
     Attributes:
@@ -19,12 +18,12 @@ class URLSpec(BaseSchema):
         ```python
         url_spec = URLSpec(
             url="https://example.com/image.jpg",
-            metadata={"description": "Sample image"}
+            metadata={"description": "Sample image"},
         )
         ```
     """
 
-    __slots__ = ("url", "metadata")
+    __slots__ = ("metadata", "url")
 
     def __init__(
         self,
@@ -35,7 +34,8 @@ class URLSpec(BaseSchema):
         self.url = url
         self.metadata = metadata
 
-class Message(BaseSchema):
+
+class Message(t.NamedTuple):
     """Individual message in a conversation.
 
     Represents a single conversational turn with role, text content, and
@@ -53,38 +53,27 @@ class Message(BaseSchema):
         ```python
         # Text-only message
         user_msg = Message(
-            role="user",
-            content="What should I wear today?"
+            role="user", content="What should I wear today?"
         )
 
         # Message with image (e.g., tongue diagnosis)
         image_msg = Message(
             role="user",
             content="Please analyze this",
-            image=image_bytes  # Raw image data
+            image=image_bytes,  # Raw image data
         )
 
         # System message (for providing instructions)
         system_msg = Message(
             role="system",
-            content="You are a helpful TCM health assistant."
+            content="You are a helpful TCM health assistant.",
         )
         ```
     """
 
-    __slots__ = ("content", "image", "role")
-
-    def __init__(
-        self,
-        *,
-        role: t.Literal["system", "user", "assistant"],
-        content: str | None,
-        image: bytes | URLSpec | None = None,
-    ) -> None:
-        super().__init__()
-        self.role = role
-        self.content = content
-        self.image = image
+    role: t.Literal["system", "user", "assistant"]
+    content: str | None
+    image: bytes | URLSpec | None
 
 
 class Messages(BaseModel):
@@ -100,23 +89,35 @@ class Messages(BaseModel):
     Example:
         ```python
         # Valid conversation
-        messages = Messages(messages=[
-            Message(role="user", content="Hello"),
-            Message(role="assistant", content="Hi! How can I help?"),
-            Message(role="user", content="What's the weather?"),
-        ])
+        messages = Messages(
+            messages=[
+                Message(role="user", content="Hello"),
+                Message(
+                    role="assistant", content="Hi! How can I help?"
+                ),
+                Message(role="user", content="What's the weather?"),
+            ]
+        )
 
         # Invalid: consecutive user messages (raises ValidationError)
-        invalid = Messages(messages=[
-            Message(role="user", content="Hello"),
-            Message(role="user", content="Are you there?"),  # Error!
-        ])
+        invalid = Messages(
+            messages=[
+                Message(role="user", content="Hello"),
+                Message(
+                    role="user", content="Are you there?"
+                ),  # Error!
+            ]
+        )
 
         # Invalid: ends with assistant (raises ValidationError)
-        invalid = Messages(messages=[
-            Message(role="user", content="Hello"),
-            Message(role="assistant", content="Hi!"),  # Error: must end with user
-        ])
+        invalid = Messages(
+            messages=[
+                Message(role="user", content="Hello"),
+                Message(
+                    role="assistant", content="Hi!"
+                ),  # Error: must end with user
+            ]
+        )
         ```
     """
 

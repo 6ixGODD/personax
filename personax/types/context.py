@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import typing as t
 
-from personax.types import BaseSchema
 from personax.types.message import Message
 
 
-class Context(BaseSchema):
+class Context(t.NamedTuple):
     """Shared context object passed through the ContextSystem pipeline.
 
     Encapsulates the conversation state and accumulated contextual data as
@@ -27,47 +26,7 @@ class Context(BaseSchema):
             metadata. Each ContextSystem stores its built content here under
             its __key__. Also used for passing external data like user profiles
             via extras.
-
-    Example:
-        ```python
-        # Initial context with user profile data
-        context = Context(
-            messages=[
-                Message(role="user", content="What's the weather?"),
-            ],
-            context={
-                "profile.info": {"location": "San Francisco", "timezone": "PST"}
-            }
-        )
-
-        # After ProfileContextSystem build phase
-        # context.context = {
-        #     "profile.info": {...},
-        #     "profile": {
-        #         "location": "San Francisco",
-        #         "timestamp": "2025-11-07T05:54:44Z",
-        #         ...
-        #     }
-        # }
-
-        # After WeatherContextSystem build phase (can access profile data)
-        # context.context = {
-        #     "profile.info": {...},
-        #     "profile": {...},
-        #     "weather": {
-        #         "temperature": 15.5,
-        #         "condition": "Cloudy",
-        #         "location": "San Francisco"  # Extracted from profile
-        #     }
-        # }
-        ```
     """
 
     messages: list[Message]
     context: dict[str, t.Any]
-
-    __slots__ = ("context", "messages")
-
-    def __init__(self, *, messages: list[Message], context: dict[str, t.Any] | None = None):
-        self.messages = messages
-        self.context = context or {}

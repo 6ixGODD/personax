@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import typing as t
 
-from personax.types import BaseSchema
 from personax.types.usage import Usage
 
 
-class CompletionMessage(BaseSchema):
+class CompletionMessage(t.NamedTuple):
     """LLM completion message content.
 
     Contains the generated text response and associated metadata from
@@ -19,44 +18,14 @@ class CompletionMessage(BaseSchema):
             was refused or contained only tool calls.
         refusal: Optional refusal message if the model declined to respond
             (e.g., for safety or policy reasons).
-
-    Example:
-        ```python
-        # Successful completion
-        message = CompletionMessage(
-            content="The capital of France is Paris.",
-            reason=None,
-            refusal=None,
-        )
-
-        # Refused completion
-        message = CompletionMessage(
-            content=None,
-            refusal="I cannot provide that information.",
-            reason="safety",
-        )
-        ```
     """
 
-    reason: str | None
-    content: str | None
-    refusal: str | None
-
-    __slots__ = ("content", "reason", "refusal")
-
-    def __init__(
-        self,
-        *,
-        reason: str | None = None,
-        content: str | None = None,
-        refusal: str | None = None,
-    ) -> None:
-        self.reason = reason
-        self.content = content
-        self.refusal = refusal
+    reason: str | None = None
+    content: str | None = None
+    refusal: str | None = None
 
 
-class Completion(BaseSchema):
+class Completion(t.NamedTuple):
     """Complete LLM response with metadata.
 
     Represents the final output from a non-streaming completion request,
@@ -73,20 +42,6 @@ class Completion(BaseSchema):
         created: Unix timestamp when the completion was created.
         model: Model identifier (metadata field, set via model parameter).
         usage: Token usage statistics, if provided by the model.
-
-    Example:
-        ```python
-        completion = await system.complete(messages, model="gpt-4")
-
-        print(completion.id)  # "chatcmpl-abc123"
-        print(completion.message.content)  # "The answer is 42."
-        print(completion.finish_reason)  # "stop"
-        print(completion.model)  # "gpt-4"
-
-        if completion.usage:
-            print(f"Used {completion.usage.total_tokens} tokens")
-            # Used 150 tokens
-        ```
     """
 
     id: str
@@ -94,23 +49,4 @@ class Completion(BaseSchema):
     finish_reason: t.Literal["stop", "length", "content_filter"]
     created: int
     model: str
-    usage: Usage | None
-
-    __slots__ = ("created", "finish_reason", "id", "message", "model", "usage")
-
-    def __init__(
-        self,
-        *,
-        id: str,  # pylint: disable=redefined-builtin
-        message: CompletionMessage,
-        finish_reason: t.Literal["stop", "length", "content_filter"],
-        created: int,
-        model: str,
-        usage: Usage | None = None,
-    ) -> None:
-        self.id = id
-        self.message: CompletionMessage = message
-        self.finish_reason = finish_reason
-        self.created = created
-        self.model = model
-        self.usage = usage
+    usage: Usage | None = None

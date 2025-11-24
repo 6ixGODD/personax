@@ -4,11 +4,10 @@ import typing as t
 
 import pydantic as pydt
 
-from personax.types import BaseSchema
 from personax.types.message import Messages as RawMessages
 
 
-class Message(BaseSchema):
+class Message(t.NamedTuple):
     """Completion-compatible message format.
 
     Simplified message structure for CompletionSystem input/output.
@@ -38,18 +37,6 @@ class Message(BaseSchema):
 
     role: t.Literal["user", "assistant", "system"]
     content: str
-
-    __slots__ = ("content", "role")
-
-    def __init__(
-        self,
-        *,
-        role: t.Literal["user", "assistant", "system"],
-        content: str,
-    ) -> None:
-        super().__init__()
-        self.role = role
-        self.content = content
 
 
 class Messages(RawMessages):
