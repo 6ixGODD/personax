@@ -47,6 +47,24 @@ def singleton(cls: type[_C]) -> t.Callable[..., _C]:
 
 
 class classproperty(property):  # noqa: N801
+    """A descriptor that behaves like a property but is accessed on the class.
+
+    This class allows defining properties that can be accessed directly on
+    the class rather than on instances of the class. It is useful for
+    defining computed attributes that are relevant to the class itself.
+
+    Examples:
+        ```python
+        class MyClass:
+            _value = 42
+
+            @classproperty
+            def value(cls):
+                return cls._value
+
+        print(MyClass.value)  # Outputs: 42
+        ```
+    """
     def __get__(self, __instance: t.Any, __owner: type | None = None) -> t.Any:
         if not callable(self.fget):
             raise TypeError("fget must be callable")
@@ -95,6 +113,14 @@ def filter_kwargs(
 
 
 class Unset:
+    """A singleton class representing an unset value.
+
+    This class is used to indicate that a value has not been set or
+    provided. It behaves as a falsy value and is distinct from None.
+    """
+
+    __slots__ = ()
+
     def __repr__(self) -> str:
         return "<UNSET>"
 
@@ -117,6 +143,17 @@ def flatten_dict(
     sep: str = ".",
     _parent: str = "",
 ) -> dict[str, t.Any]:
+    """Flatten a nested dictionary into a single-level dictionary
+    with keys representing the path to each value.
+
+    Args:
+        _dict: The nested dictionary to flatten.
+        sep: The separator to use between keys. Default is '.'.
+        _parent: The parent key path used for recursion. Default is ''.
+
+    Returns:
+        A flattened dictionary with concatenated keys.
+    """
     items = []  # type: t.List[tuple[str, t.Any]]
     for k, v in _dict.items():
         key = f"{_parent}{sep}{k}" if _parent else k
@@ -128,6 +165,21 @@ def flatten_dict(
 
 
 class AsyncContextMixin:
+    """A mixin class that provides asynchronous context manager
+    functionality.
+
+    Examples:
+        ```python
+        class MyAsyncResource(AsyncContextMixin):
+            async def init(self) -> None:
+                # Initialize resource
+                pass
+
+            async def close(self) -> None:
+                # Clean up resource
+                pass
+        ```
+    """
     async def init(self) -> None: ...
     async def close(self) -> None: ...
 
