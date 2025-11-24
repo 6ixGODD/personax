@@ -9,9 +9,9 @@ import typing_extensions as te
 
 from personax.context import ContextSystem
 from personax.exceptions import RESTError
-from personax.resources.restful.ip import IpLocationService
-from personax.resources.restful.ip import Location
-from personax.resources.template import Template
+from personax.resource.restful.ip import IpLocationService
+from personax.resource.restful.ip import Location
+from personax.resource.template import Template
 from personax.types.context import Context
 
 logger = logging.getLogger("personax.context.profile")

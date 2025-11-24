@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import typing as t
 
-from personax.resources.template import Template
+from personax.resource.template import Template
 from personax.types.compat.message import Messages as CompatMessages
 from personax.types.context import Context
 from personax.types.message import Messages
