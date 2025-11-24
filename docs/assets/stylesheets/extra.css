@@ -1,0 +1,129 @@
+/* Custom styles for BoxLab documentation */
+
+/* Grid cards styling */
+.grid.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.grid.cards > * {
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 0.2rem;
+    padding: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.grid.cards > *:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Code block enhancements */
+.highlight pre {
+    border-radius: 0.2rem;
+}
+
+/* Keyboard shortcuts */
+kbd {
+    padding: 0.1rem 0.4rem;
+    font-size: 0.85em;
+    color: var(--md-code-fg-color);
+    background-color: var(--md-code-bg-color);
+    border-radius: 0.2rem;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Admonition customization */
+.admonition {
+    border-radius: 0.2rem;
+}
+
+/* Table improvements */
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table th {
+    background-color: var(--md-default-fg-color--lightest);
+    font-weight: 600;
+}
+
+/* Command output styling */
+.command-output {
+    background-color: var(--md-code-bg-color);
+    border-left: 3px solid var(--md-primary-fg-color);
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0.2rem;
+    font-family: var(--md-code-font-family);
+    font-size: 0.85em;
+}
+
+/* Status indicators */
+.status-success {
+    color: #4caf50;
+}
+
+.status-error {
+    color: #f44336;
+}
+
+.status-warning {
+    color: #ff9800;
+}
+
+.status-info {
+    color: #2196f3;
+}
+
+/* Version badge */
+.version-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75em;
+    font-weight: 600;
+    border-radius: 0.2rem;
+    background-color: var(--md-primary-fg-color);
+    color: white;
+}
+
+/* Footer customization */
+.md-footer-meta {
+    background-color: var(--md-default-bg-color);
+}
+
+/* Navigation improvements */
+.md-nav__item--active > .md-nav__link {
+    font-weight: 600;
+}
+
+/* Code tabs */
+.tabbed-set {
+    margin: 1rem 0;
+}
+
+/* API documentation tables */
+.doc-table {
+    font-size: 0.9em;
+}
+
+.doc-table th {
+    text-align: left;
+    padding: 0.5rem;
+}
+
+.doc-table td {
+    padding: 0.5rem;
+    vertical-align: top;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 76.1875em) {
+    .grid.cards {
+        grid-template-columns: 1fr;
+    }
+}
