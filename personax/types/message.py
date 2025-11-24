@@ -73,7 +73,7 @@ class Message(t.NamedTuple):
 
     role: t.Literal["system", "user", "assistant"]
     content: str | None
-    image: bytes | URLSpec | None
+    image: bytes | URLSpec | None = None
 
 
 class Messages(BaseModel):
