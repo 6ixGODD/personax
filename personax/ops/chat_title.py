@@ -11,7 +11,7 @@ class ChatTitle:
         self.completion = completion
         self.prompt = prompt
 
-    async def generate(self, messages: list[Message]) -> str:
+    async def __call__(self, messages: list[Message]) -> str:
         prompt_filled = self.prompt.render(
             messages="\n".join(f"{message.role}: {message.content}" for message in messages)
         )
