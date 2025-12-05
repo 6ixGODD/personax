@@ -55,7 +55,7 @@ partial_branches =
 [html]
 directory = htmlcov
 
-title = Boxlab Coverage Report
+title = PersonaX Coverage Report
 
 [xml]
 output = coverage.xml
